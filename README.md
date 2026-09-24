@@ -31,7 +31,7 @@ Core, y el Core no conoce el módulo de negocio (RD-03).
 
 ```mermaid
 flowchart TB
-  subgraph CORE["CORE — especificación fija del curso"]
+  subgraph CORE
     direction TB
     ACC["<b>Control de acceso</b><br/><i>Autentica usuarios y les asigna un rol</i>"]
     PERM["<b>Gestión de permisos</b><br/><i>Resuelve solicitudes de acceso elevado</i>"]
