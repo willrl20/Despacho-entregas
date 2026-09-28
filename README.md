@@ -141,3 +141,18 @@ stateDiagram-v2
 | Notificaciones | 11–12 | Pendiente |
 | Reportes | 12 | Pendiente |
 | Auditoría | 14 | Pendiente |
+
+
+
+
+
+## Instrucciones de Ejecución
+
+1. Clonar el repositorio:
+   git clone https://github.com/willrl20/Despacho-entregas.git
+
+2. Restaurar dependencias de .NET:
+   dotnet restore
+
+3. Compilar y ejecutar la aplicación:
+   dotnet run
