@@ -427,3 +427,11 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# Variables de entorno / secretos
+.env
+appsettings.Development.json
+appsettings.*.local.json
+
+# Docker
+docker-compose.override.yml
