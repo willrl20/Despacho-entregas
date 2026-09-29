@@ -4,7 +4,7 @@ Sistema de gestión de entregas para un servicio de reparto que opera
 para varios comercios. Registra pedidos, los asigna a repartidores y
 sigue el estado de cada entrega hasta su cierre.
 
-Proyecto de **Programación III (TDS-007)** · ITLA · 2026-C-3
+Proyecto de **Programación III (TDS-007)** · ITLA · 2026-C-3 · Prototipo en consola
 
 ---
 
