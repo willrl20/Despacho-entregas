@@ -19,6 +19,7 @@ public sealed class ServicioRegistro : IServicioRegistro
     private readonly IHasherContrasenas _hasher;
     private readonly IGeneradorTokens _generador;
     private readonly IReloj _reloj;
+    private readonly IColaCorreos _cola;
     private readonly OpcionesActivacion _opciones;
 
     public ServicioRegistro(
@@ -27,6 +28,7 @@ public sealed class ServicioRegistro : IServicioRegistro
         IHasherContrasenas hasher,
         IGeneradorTokens generador,
         IReloj reloj,
+        IColaCorreos cola,
         OpcionesActivacion opciones)
     {
         _db = db;
@@ -34,6 +36,7 @@ public sealed class ServicioRegistro : IServicioRegistro
         _hasher = hasher;
         _generador = generador;
         _reloj = reloj;
+        _cola = cola;
         _opciones = opciones;
     }
 
@@ -147,12 +150,6 @@ public sealed class ServicioRegistro : IServicioRegistro
             VenceEnUtc = _reloj.AhoraUtc + _opciones.Vigencia
         });
 
-        _db.CorreosEnCola.Add(new CorreoEnCola
-        {
-            Destinatario = usuario.Correo,
-            Asunto = "Activa tu cuenta",
-            Cuerpo = $"Para activar tu cuenta abre este enlace: {_opciones.UrlBase}?token={token}",
-            CreadoEnUtc = _reloj.AhoraUtc
-        });
+        _cola.Encolar(usuario.Correo, "Activa tu cuenta", $"Para activar tu cuenta abre este enlace: {_opciones.UrlBase}?token={token}");
     }
 }
