@@ -1,13 +1,36 @@
+using Despacho.Api.Endpoints;
+using Despacho.Core.Comun;
+using Despacho.Core.Correos;
+using Despacho.Core.Datos;
+using Despacho.Core.Seguridad;
+using Despacho.Core.Usuarios;
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+var cadenaConexion = builder.Configuration["DESPACHO_CONEXION"] ?? throw new InvalidOperationException("Falta la variable de entorno DESPACHO_CONEXION.");
+var urlActivacion = builder.Configuration["DESPACHO_URL_ACTIVACION"] ?? throw new InvalidOperationException("Falta la variable de entorno DESPACHO_URL_ACTIVACION.");
+
+builder.Services.AddDbContext<CoreDbContext>(opciones => opciones.UseSqlServer(cadenaConexion));
+builder.Services.AddSingleton<IReloj, RelojSistema>();
+builder.Services.AddSingleton<IValidadorContrasena, ValidadorContrasena>();
+builder.Services.AddSingleton<IHasherContrasenas, HasherContrasenas>();
+builder.Services.AddSingleton<IGeneradorTokens, GeneradorTokens>();
+builder.Services.AddSingleton(new OpcionesActivacion { UrlBase = urlActivacion });
+builder.Services.AddScoped<IColaCorreos, ColaCorreos>();
+builder.Services.AddScoped<IServicioRegistro, ServicioRegistro>();
+builder.Services.Configure<RouteHandlerOptions>(opciones => opciones.ThrowOnBadRequest = false);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+app.UseExceptionHandler(errores => errores.Run(async contexto =>
+{
+    contexto.Response.StatusCode = StatusCodes.Status500InternalServerError;
+    await contexto.Response.WriteAsJsonAsync(new { error = "Ocurrió un error inesperado." });
+}));
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -15,30 +38,5 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast")
-.WithOpenApi();
-
+app.MapCuentas();
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
