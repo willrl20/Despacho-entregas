@@ -39,7 +39,7 @@ public sealed class ServicioRegistro : IServicioRegistro
 
     public async Task<Resultado> RegistrarAsync(string? correo, string? contrasena)
     {
-        var correoNormalizado = NormalizarCorreo(correo);
+        var correoNormalizado = NormalizadorCorreo.Normalizar(correo);
         if (correoNormalizado is null)
         {
             return Resultado.Falla(MensajeCorreoInvalido);
@@ -110,7 +110,7 @@ public sealed class ServicioRegistro : IServicioRegistro
 
     public async Task<Resultado> ReenviarActivacionAsync(string? correo)
     {
-        var correoNormalizado = NormalizarCorreo(correo);
+        var correoNormalizado = NormalizadorCorreo.Normalizar(correo);
         if (correoNormalizado is null)
         {
             return Resultado.Ok();
@@ -154,21 +154,5 @@ public sealed class ServicioRegistro : IServicioRegistro
             Cuerpo = $"Para activar tu cuenta abre este enlace: {_opciones.UrlBase}?token={token}",
             CreadoEnUtc = _reloj.AhoraUtc
         });
-    }
-
-    private static string? NormalizarCorreo(string? correo)
-    {
-        if (string.IsNullOrWhiteSpace(correo))
-        {
-            return null;
-        }
-
-        var normalizado = correo.Trim().ToLowerInvariant();
-        if (normalizado.Length > 256 || !System.Net.Mail.MailAddress.TryCreate(normalizado, out _))
-        {
-            return null;
-        }
-
-        return normalizado;
     }
 }
