@@ -174,6 +174,13 @@ Para las peticiones se usa `curl.exe` con el cuerpo en un archivo JSON, por ejem
 curl.exe -k -X POST https://localhost:7063/api/cuentas/registro -H "Content-Type: application/json" --data "@$env:TEMP\registro.json"
 ```
 
+Para guardar el token del inicio de sesión y usarlo en las demás peticiones:
+
+```
+$token = (curl.exe -k -s -X POST https://localhost:7063/api/sesion/iniciar -H "Content-Type: application/json" --data "@$env:TEMP\login.json" | ConvertFrom-Json).token
+curl.exe -k https://localhost:7063/api/sesion/yo -H "Authorization: Bearer $token"
+```
+
 ### Cómo probar cada criterio
 
 | Criterio | Cómo provocarlo | Resultado esperado |
@@ -186,8 +193,13 @@ curl.exe -k -X POST https://localhost:7063/api/cuentas/registro -H "Content-Type
 | RF-CA-17 reenvío | `POST /api/cuentas/reenviar-activacion` con un correo que exista y con uno que no | Mismo mensaje en los dos casos; el enlace anterior deja de servir |
 | RF-NOT-08 cola | Registrarse con `SMTP_CONTRASENA` incorrecta o sin internet | El registro responde bien y el correo queda pendiente |
 | RF-NOT-09 sin duplicar | Correr EnviadorCorreos dos veces seguidas | La segunda vez dice "Correos enviados: 0" |
+| RF-CA-03 inicio de sesión | `POST /api/sesion/iniciar` con datos correctos y con datos incorrectos | Correctos: devuelve un `token`. Incorrectos: 401 "Correo o contraseña incorrectos." sin decir cuál falló |
+| RF-CA-15 cuenta no activa | Iniciar sesión con una cuenta que no ha abierto el enlace | 401 "La cuenta no está activa. Revisa tu correo para activarla." |
+| RF-CA-07 usuario autenticado | `GET /api/sesion/yo` con el encabezado `Authorization: Bearer <token>` | Devuelve id, correo y rol |
+| RF-CA-18 cierre de sesión | `POST /api/sesion/cerrar` con el token y luego `GET /api/sesion/yo` con el mismo token | `/yo` responde 401 "Sesión no válida." |
+| RF-CA-19 bloqueo | 5 inicios de sesión con contraseña incorrecta y luego uno con la correcta | El sexto se rechaza: cuenta bloqueada 15 minutos. Un inicio correcto antes del quinto fallo pone el contador en cero |
 | RD-04 máquina de estados | Ver `docs/maquina-de-estados.md` | Tabla de transiciones, prohibida y terminales |
 
 ### Pendiente
 
-Sesión, recuperación de contraseña y administración de usuarios. Swagger no carga todavía; las pruebas se hacen con curl.
+Recuperación de contraseña y administración de usuarios. Swagger no carga todavía; las pruebas se hacen con curl.
