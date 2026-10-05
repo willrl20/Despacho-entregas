@@ -124,12 +124,6 @@ stateDiagram-v2
 
 ---
 
-## Cómo ejecutar el proyecto
-
-> Pendiente. Se completa cuando exista código ejecutable (Práctica 1).
-
----
-
 ## Estado del proyecto
 
 | Pieza | Semanas | Estado |
@@ -142,17 +136,58 @@ stateDiagram-v2
 | Reportes | 12 | Pendiente |
 | Auditoría | 14 | Pendiente |
 
+---
 
+## Cómo ejecutar (Práctica 1)
 
+### Requisitos
 
+- .NET SDK 8
+- SQL Server local (instancia por defecto, autenticación de Windows)
+- Herramienta de EF Core: `dotnet tool install --global dotnet-ef --version 8.0.11`
+- Una cuenta de Gmail con verificación en dos pasos y una contraseña de aplicación
 
-## Instrucciones de Ejecución
+### Variables de entorno
 
-1. Clonar el repositorio:
-   git clone https://github.com/willrl20/Despacho-entregas.git
+Nunca se guardan en el repositorio. En PowerShell se ponen con `$env:NOMBRE = "<valor>"` y duran mientras la terminal esté abierta.
 
-2. Restaurar dependencias de .NET:
-   dotnet restore
+| Variable | Para qué |
+|---|---|
+| `DESPACHO_CONEXION` | Cadena de conexión a SQL Server. La usan la Api y el EnviadorCorreos |
+| `DESPACHO_URL_ACTIVACION` | Dirección base del enlace de activación (la del endpoint `GET /api/cuentas/activar`) |
+| `SMTP_HOST` | Servidor SMTP |
+| `SMTP_PUERTO` | Puerto del servidor SMTP |
+| `SMTP_USUARIO` | Cuenta que inicia sesión en el servidor SMTP |
+| `SMTP_CONTRASENA` | Contraseña de aplicación de esa cuenta |
+| `SMTP_REMITENTE` | Dirección que aparece como remitente |
 
-3. Compilar y ejecutar la aplicación:
-   dotnet run
+### Pasos
+
+1. Crear la base de datos: `dotnet ef database update --project src/Despacho.Core --startup-project src/Despacho.Api`
+2. Arrancar la Api (queda en `https://localhost:7063`): `dotnet run --project src/Despacho.Api --launch-profile https`
+3. En otra terminal, enviar los correos pendientes: `dotnet run --project src/Despacho.EnviadorCorreos`
+
+Para las peticiones se usa `curl.exe` con el cuerpo en un archivo JSON, por ejemplo:
+
+```
+@{ correo = "<correo>"; contrasena = "Prueba123" } | ConvertTo-Json | Set-Content $env:TEMP\registro.json
+curl.exe -k -X POST https://localhost:7063/api/cuentas/registro -H "Content-Type: application/json" --data "@$env:TEMP\registro.json"
+```
+
+### Cómo probar cada criterio
+
+| Criterio | Cómo provocarlo | Resultado esperado |
+|---|---|---|
+| RF-CA-01 correo único | Registrar dos veces el mismo correo | La segunda vez responde 400 "Ya existe una cuenta con ese correo." |
+| RF-CA-02 hash con sal | Registrar dos correos con la misma contraseña y ver la tabla `Usuarios` | Los dos `HashContrasena` son distintos |
+| RF-CA-14 contraseña | Registrar con menos de 8 caracteres, sin letras o sin números | Responde 400 con la regla de la contraseña |
+| RF-CA-15 nace inactivo | Registrarse y ver la tabla `Usuarios` | `Activada` = 0 y hay un correo pendiente en `CorreosEnCola` |
+| RF-CA-16 activación | Correr EnviadorCorreos y abrir el enlace del correo | "Cuenta activada". Abrirlo otra vez o con el token vencido (24 h) da error |
+| RF-CA-17 reenvío | `POST /api/cuentas/reenviar-activacion` con un correo que exista y con uno que no | Mismo mensaje en los dos casos; el enlace anterior deja de servir |
+| RF-NOT-08 cola | Registrarse con `SMTP_CONTRASENA` incorrecta o sin internet | El registro responde bien y el correo queda pendiente |
+| RF-NOT-09 sin duplicar | Correr EnviadorCorreos dos veces seguidas | La segunda vez dice "Correos enviados: 0" |
+| RD-04 máquina de estados | Ver `docs/maquina-de-estados.md` | Tabla de transiciones, prohibida y terminales |
+
+### Pendiente
+
+Sesión, recuperación de contraseña y administración de usuarios. Swagger no carga todavía; las pruebas se hacen con curl.
