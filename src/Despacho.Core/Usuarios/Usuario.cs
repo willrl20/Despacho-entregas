@@ -10,4 +10,5 @@ public class Usuario
     public Rol Rol { get; set; } = Rol.Estandar;
     public int IntentosFallidos { get; set; }
     public DateTime? BloqueadoHastaUtc { get; set; }
+    public bool Desactivado { get; set; }
 }
