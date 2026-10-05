@@ -164,7 +164,9 @@ Nunca se guardan en el repositorio. En PowerShell se ponen con `$env:NOMBRE = "<
 
 ### Pasos
 
-1. Crear la base de datos: `dotnet ef database update --project src/Despacho.Core --startup-project src/Despacho.Api`
+1. Crear la base de datos (son dos partes, Core y Negocio):
+   - `dotnet ef database update --context CoreDbContext --project src/Despacho.Core --startup-project src/Despacho.Api`
+   - `dotnet ef database update --context NegocioDbContext --project src/Despacho.Negocio --startup-project src/Despacho.Api`
 2. Arrancar la Api (queda en `https://localhost:7063`): `dotnet run --project src/Despacho.Api --launch-profile https`
 3. En otra terminal, enviar los correos pendientes: `dotnet run --project src/Despacho.EnviadorCorreos`
 
@@ -209,7 +211,7 @@ curl.exe -k https://localhost:7063/api/sesion/yo -H "Authorization: Bearer $toke
 | RF-CA-11 y RF-CA-12 restablecer | `POST /api/contrasenas/restablecer` con `{"correo", "codigo", "contrasenaNueva"}` | La contraseña vieja deja de servir, la nueva funciona, las sesiones anteriores dan "Sesión no válida." y el mismo código no se puede usar otra vez |
 | RF-CA-13 restablecimiento forzado | `POST /api/usuarios/{id}/forzar-restablecimiento` con token de Administrador y correr EnviadorCorreos | El usuario recibe un código por correo y sus sesiones se cierran |
 | RF-CA-22 cambio con sesión | `POST /api/contrasenas/cambiar` con `{"contrasenaActual", "contrasenaNueva"}` y el token | Con la actual incorrecta da error; con la correcta cambia, aplica la regla de RF-CA-14 y cierra las sesiones |
-| RD-04 máquina de estados | Ver `docs/maquina-de-estados.md` | Tabla de transiciones, prohibida y terminales |
+| RD-04 máquina de estados | Ver `src/Despacho.Negocio/Pedidos`, la tabla `Pedidos` con su columna `Estado` y `docs/maquina-de-estados.md` | Tabla de transiciones, prohibida y terminales |
 
 ### Pendiente
 

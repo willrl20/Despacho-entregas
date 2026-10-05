@@ -7,6 +7,7 @@ using Despacho.Core.Datos;
 using Despacho.Core.Seguridad;
 using Despacho.Core.Sesiones;
 using Despacho.Core.Usuarios;
+using Despacho.Negocio.Datos;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,6 +16,7 @@ var cadenaConexion = builder.Configuration["DESPACHO_CONEXION"] ?? throw new Inv
 var urlActivacion = builder.Configuration["DESPACHO_URL_ACTIVACION"] ?? throw new InvalidOperationException("Falta la variable de entorno DESPACHO_URL_ACTIVACION.");
 
 builder.Services.AddDbContext<CoreDbContext>(opciones => opciones.UseSqlServer(cadenaConexion));
+builder.Services.AddDbContext<NegocioDbContext>(opciones => opciones.UseSqlServer(cadenaConexion, sql => sql.MigrationsHistoryTable("__EFMigrationsHistory_Negocio")));
 builder.Services.AddSingleton<IReloj, RelojSistema>();
 builder.Services.AddSingleton<IValidadorContrasena, ValidadorContrasena>();
 builder.Services.AddSingleton<IHasherContrasenas, HasherContrasenas>();
