@@ -5,11 +5,11 @@ namespace Despacho.Api.Seguridad;
 
 public sealed class FiltroRol : IEndpointFilter
 {
-    private readonly Rol _rolRequerido;
+    private readonly Rol? _rolRequerido;
 
     public const string ClaveUsuario = "UsuarioActual";
 
-    public FiltroRol(Rol rolRequerido)
+    public FiltroRol(Rol? rolRequerido)
     {
         _rolRequerido = rolRequerido;
     }
@@ -25,7 +25,7 @@ public sealed class FiltroRol : IEndpointFilter
         if (usuario is null)
             return Results.Json(new { error = "Sesión no válida." }, statusCode: StatusCodes.Status401Unauthorized);
 
-        if (usuario.Rol != _rolRequerido)
+        if (_rolRequerido.HasValue && usuario.Rol != _rolRequerido.Value)
             return Results.Json(new { error = "No tienes permiso para esta operación." }, statusCode: StatusCodes.Status403Forbidden);
 
         contexto.HttpContext.Items[ClaveUsuario] = usuario;
@@ -37,4 +37,7 @@ public static class ExtensionesRol
 {
     public static TBuilder RequiereRol<TBuilder>(this TBuilder builder, Rol rol) where TBuilder : IEndpointConventionBuilder
         => builder.AddEndpointFilter(new FiltroRol(rol));
+
+    public static TBuilder RequiereSesion<TBuilder>(this TBuilder builder) where TBuilder : IEndpointConventionBuilder
+        => builder.AddEndpointFilter(new FiltroRol(null));
 }
