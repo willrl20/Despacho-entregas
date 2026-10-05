@@ -1,4 +1,5 @@
 using Despacho.Api.Endpoints;
+using Despacho.Core.Administracion;
 using Despacho.Core.Comun;
 using Despacho.Core.Correos;
 using Despacho.Core.Datos;
@@ -21,11 +22,18 @@ builder.Services.AddSingleton(new OpcionesActivacion { UrlBase = urlActivacion }
 builder.Services.AddScoped<IColaCorreos, ColaCorreos>();
 builder.Services.AddScoped<IServicioRegistro, ServicioRegistro>();
 builder.Services.AddScoped<IServicioSesion, ServicioSesion>();
+builder.Services.AddScoped<IServicioAdministracion, ServicioAdministracion>();
 builder.Services.Configure<RouteHandlerOptions>(opciones => opciones.ThrowOnBadRequest = false);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+
+using (var alcance = app.Services.CreateScope())
+{
+    var administracion = alcance.ServiceProvider.GetRequiredService<IServicioAdministracion>();
+    await administracion.PromoverAdministradorInicialAsync(builder.Configuration["DESPACHO_ADMIN_CORREO"]);
+}
 
 app.UseExceptionHandler(errores => errores.Run(async contexto =>
 {
@@ -42,4 +50,5 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.MapCuentas();
 app.MapSesion();
+app.MapUsuarios();
 app.Run();
