@@ -119,6 +119,7 @@ public sealed class ServicioContrasenas : IServicioContrasenas
         if (usuario is null)
             return Resultado.Falla(MensajeNoExiste);
 
+        usuario.HashContrasena = _hasher.Hashear(Convert.ToHexString(System.Security.Cryptography.RandomNumberGenerator.GetBytes(32)));
         EmitirCodigo(usuario);
         await RevocarSesionesAsync(usuario.Id);
         await _db.SaveChangesAsync();
