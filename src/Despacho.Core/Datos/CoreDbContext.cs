@@ -1,4 +1,5 @@
 using Despacho.Core.Correos;
+using Despacho.Core.Sesiones;
 using Despacho.Core.Usuarios;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,6 +14,7 @@ public class CoreDbContext : DbContext
     public DbSet<Usuario> Usuarios => Set<Usuario>();
     public DbSet<TokenActivacion> TokensActivacion => Set<TokenActivacion>();
     public DbSet<CorreoEnCola> CorreosEnCola => Set<CorreoEnCola>();
+    public DbSet<Sesion> Sesiones => Set<Sesion>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -29,6 +31,10 @@ public class CoreDbContext : DbContext
 
             entity.Property(u => u.HashContrasena)
                 .IsRequired();
+
+            entity.Property(u => u.Rol)
+                .HasConversion<string>()
+                .HasMaxLength(20);
         });
 
         modelBuilder.Entity<TokenActivacion>(entity =>
@@ -57,6 +63,18 @@ public class CoreDbContext : DbContext
                 .IsRequired();
 
             entity.HasIndex(c => c.Enviado);
+        });
+
+        modelBuilder.Entity<Sesion>(entity =>
+        {
+            entity.Property(s => s.Token)
+                .IsRequired()
+                .HasMaxLength(128);
+
+            entity.HasIndex(s => s.Token)
+                .IsUnique();
+
+            entity.HasIndex(s => s.UsuarioId);
         });
     }
 }
