@@ -7,4 +7,7 @@ public class Usuario
     public string HashContrasena { get; set; } = string.Empty;
     public bool Activada { get; set; } = false;
     public DateTime CreadoEnUtc { get; set; }
+    public Rol Rol { get; set; } = Rol.Estandar;
+    public int IntentosFallidos { get; set; }
+    public DateTime? BloqueadoHastaUtc { get; set; }
 }

@@ -3,6 +3,7 @@ using Despacho.Core.Comun;
 using Despacho.Core.Correos;
 using Despacho.Core.Datos;
 using Despacho.Core.Seguridad;
+using Despacho.Core.Sesiones;
 using Despacho.Core.Usuarios;
 using Microsoft.EntityFrameworkCore;
 
@@ -19,6 +20,7 @@ builder.Services.AddSingleton<IGeneradorTokens, GeneradorTokens>();
 builder.Services.AddSingleton(new OpcionesActivacion { UrlBase = urlActivacion });
 builder.Services.AddScoped<IColaCorreos, ColaCorreos>();
 builder.Services.AddScoped<IServicioRegistro, ServicioRegistro>();
+builder.Services.AddScoped<IServicioSesion, ServicioSesion>();
 builder.Services.Configure<RouteHandlerOptions>(opciones => opciones.ThrowOnBadRequest = false);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -39,4 +41,5 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.MapCuentas();
+app.MapSesion();
 app.Run();
