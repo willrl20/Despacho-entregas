@@ -1,3 +1,4 @@
+using Despacho.Core.Contrasenas;
 using Despacho.Core.Correos;
 using Despacho.Core.Sesiones;
 using Despacho.Core.Usuarios;
@@ -15,6 +16,7 @@ public class CoreDbContext : DbContext
     public DbSet<TokenActivacion> TokensActivacion => Set<TokenActivacion>();
     public DbSet<CorreoEnCola> CorreosEnCola => Set<CorreoEnCola>();
     public DbSet<Sesion> Sesiones => Set<Sesion>();
+    public DbSet<CodigoRecuperacion> CodigosRecuperacion => Set<CodigoRecuperacion>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -75,6 +77,15 @@ public class CoreDbContext : DbContext
                 .IsUnique();
 
             entity.HasIndex(s => s.UsuarioId);
+        });
+
+        modelBuilder.Entity<CodigoRecuperacion>(entity =>
+        {
+            entity.Property(c => c.Codigo)
+                .IsRequired()
+                .HasMaxLength(10);
+
+            entity.HasIndex(c => c.UsuarioId);
         });
     }
 }
