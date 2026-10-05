@@ -1,6 +1,7 @@
 using Despacho.Api.Contratos;
 using Despacho.Api.Seguridad;
 using Despacho.Core.Administracion;
+using Despacho.Core.Contrasenas;
 using Despacho.Core.Sesiones;
 using Despacho.Core.Usuarios;
 
@@ -39,6 +40,14 @@ public static class UsuariosEndpoints
             var resultado = await servicio.ReactivarAsync(id);
             if (resultado.Exito)
                 return Results.Ok(new { mensaje = "Usuario reactivado." });
+            return Results.BadRequest(new { error = resultado.Error });
+        });
+
+        grupo.MapPost("/{id:int}/forzar-restablecimiento", async (int id, IServicioContrasenas servicio) =>
+        {
+            var resultado = await servicio.ForzarRestablecimientoAsync(id);
+            if (resultado.Exito)
+                return Results.Ok(new { mensaje = "Se envió un código de restablecimiento al usuario." });
             return Results.BadRequest(new { error = resultado.Error });
         });
 
