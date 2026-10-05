@@ -19,6 +19,7 @@ public sealed class ServicioSesion : IServicioSesion
     private const string MensajeCredenciales = "Correo o contraseña incorrectos.";
     private const string MensajeBloqueado = "La cuenta está bloqueada por intentos fallidos. Intenta en 15 minutos.";
     private const string MensajeNoActiva = "La cuenta no está activa. Revisa tu correo para activarla.";
+    private const string MensajeDesactivada = "La cuenta está desactivada.";
 
     public ServicioSesion(CoreDbContext db, IHasherContrasenas hasher, IGeneradorTokens generador, IReloj reloj)
     {
@@ -57,6 +58,9 @@ public sealed class ServicioSesion : IServicioSesion
         if (!usuario.Activada)
             return Resultado<string>.Falla(MensajeNoActiva);
 
+        if (usuario.Desactivado)
+            return Resultado<string>.Falla(MensajeDesactivada);
+
         usuario.IntentosFallidos = 0;
         usuario.BloqueadoHastaUtc = null;
 
@@ -83,7 +87,7 @@ public sealed class ServicioSesion : IServicioSesion
             return null;
 
         var usuario = await _db.Usuarios.FindAsync(sesion.UsuarioId);
-        if (usuario is null || !usuario.Activada)
+        if (usuario is null || !usuario.Activada || usuario.Desactivado)
             return null;
 
         return new UsuarioActual(usuario.Id, usuario.Correo, usuario.Rol);
