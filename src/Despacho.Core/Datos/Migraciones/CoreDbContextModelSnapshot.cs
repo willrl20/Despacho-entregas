@@ -92,6 +92,49 @@ namespace Despacho.Core.Datos.Migraciones
                     b.ToTable("CorreosEnCola");
                 });
 
+            modelBuilder.Entity("Despacho.Core.Permisos.SolicitudPermiso", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("AprobadorId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreadaEnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("MotivoRechazo")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("PermisoSolicitado")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime?>("ResueltaEnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("SolicitanteId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Estado");
+
+                    b.HasIndex("SolicitanteId");
+
+                    b.ToTable("SolicitudesPermiso");
+                });
+
             modelBuilder.Entity("Despacho.Core.Sesiones.Sesion", b =>
                 {
                     b.Property<int>("Id")
