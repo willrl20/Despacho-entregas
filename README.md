@@ -216,3 +216,40 @@ curl.exe -k https://localhost:7063/api/sesion/yo -H "Authorization: Bearer $toke
 ### Pendiente
 
 Swagger no carga todavía; las pruebas se hacen con curl.
+
+## Gestión de permisos (Asignación 2)
+
+Un usuario Estándar solicita un permiso, y el permiso es un rol: pide ser Administrador. Estados de la solicitud: Pendiente → Aprobada → Aplicada, y Pendiente → Rechazada. Cualquier otra transición se rechaza y el estado no cambia. Las transiciones están en un solo lugar: `src/Despacho.Core/Permisos/TransicionesSolicitud.cs`. Al aprobar, el sistema cambia el rol del solicitante y deja la solicitud en Aplicada.
+
+| Operación | Quién | Endpoint |
+|---|---|---|
+| Crear solicitud | Estándar | `POST /api/solicitudes` con `{"permiso":"Administrador"}` |
+| Ver mis solicitudes | Cualquier usuario con sesión | `GET /api/solicitudes/mias` |
+| Ver pendientes | Administrador | `GET /api/solicitudes/pendientes` |
+| Aprobar | Administrador | `POST /api/solicitudes/{id}/aprobar` |
+| Rechazar | Administrador | `POST /api/solicitudes/{id}/rechazar` con `{"motivo":"..."}` |
+
+Todas usan el encabezado `Authorization: Bearer <token>` del inicio de sesión. Se necesitan dos usuarios: un Administrador (el de `DESPACHO_ADMIN_CORREO`) y un Estándar activado.
+
+### Cómo provocar cada criterio
+
+| Criterio | Cómo provocarlo | Resultado esperado |
+|---|---|---|
+| RF-GP-01 nace Pendiente | El Estándar crea una solicitud y consulta `GET /api/solicitudes/mias` | La solicitud aparece con estado `Pendiente` |
+| RF-GP-02 consulta | El Administrador llama `GET /api/solicitudes/pendientes`; el Estándar llama el mismo endpoint | El Administrador ve las pendientes; el Estándar recibe 403 y en `/mias` solo ve las suyas |
+| RF-GP-03 aprobar | El Administrador aprueba la solicitud y el Estándar consulta `/mias` | Estado `Aplicada`, con `aprobadorId` y `resueltaEnUtc` |
+| RF-GP-04 rechazar con motivo | El Administrador rechaza una solicitud pendiente sin enviar `motivo`, y luego con `motivo` | Sin motivo: "Escribe el motivo del rechazo." y sigue `Pendiente`. Con motivo: estado `Rechazada` y `motivoRechazo` guardado |
+| RF-GP-05 aplicación automática | Después de aprobar, el solicitante llama `GET /api/sesion/yo` con su mismo token | Su rol ya es `Administrador` y puede usar `GET /api/usuarios`, sin ningún paso manual |
+| RF-GP-06 transiciones | Aprobar dos veces la misma solicitud, o aprobar una ya rechazada | "La solicitud no está pendiente." y el estado no cambia |
+| RF-GP-07 propia solicitud | Un Estándar crea una solicitud; el Administrador le cambia el rol con `PUT /api/usuarios/{id}/rol` y `{"rol":"Administrador"}`; ese usuario intenta aprobar su propia solicitud pendiente | "No puedes resolver tu propia solicitud." y la solicitud sigue `Pendiente` |
+| RD-09 persistencia | Reiniciar la Api y consultar `/mias` o `/pendientes` | Las solicitudes siguen ahí (SQL Server) |
+
+## Pruebas
+
+Desde la raíz de un clon limpio del repositorio, un solo comando ejecuta toda la suite. No necesita variables de entorno, ni SQL Server, ni la Api corriendo: las pruebas usan una base de datos en memoria y un reloj fijo.
+
+```
+dotnet test
+```
+
+La suite está en `tests/Despacho.Core.Tests`: las pruebas de la política de contraseña, de la entidad `SolicitudPermiso` (transiciones válidas y prohibidas) y del servicio de permisos (aprobar registra quién y cuándo, aplica el rol, aprobar dos veces se rechaza sin cambiar el estado, nadie resuelve su propia solicitud y el rechazo exige motivo).
