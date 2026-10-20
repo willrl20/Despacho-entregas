@@ -1,5 +1,6 @@
 using Despacho.Core.Contrasenas;
 using Despacho.Core.Correos;
+using Despacho.Core.Permisos;
 using Despacho.Core.Sesiones;
 using Despacho.Core.Usuarios;
 using Microsoft.EntityFrameworkCore;
@@ -17,6 +18,7 @@ public class CoreDbContext : DbContext
     public DbSet<CorreoEnCola> CorreosEnCola => Set<CorreoEnCola>();
     public DbSet<Sesion> Sesiones => Set<Sesion>();
     public DbSet<CodigoRecuperacion> CodigosRecuperacion => Set<CodigoRecuperacion>();
+    public DbSet<SolicitudPermiso> SolicitudesPermiso => Set<SolicitudPermiso>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -86,6 +88,23 @@ public class CoreDbContext : DbContext
                 .HasMaxLength(10);
 
             entity.HasIndex(c => c.UsuarioId);
+        });
+
+        modelBuilder.Entity<SolicitudPermiso>(entity =>
+        {
+            entity.Property(s => s.Estado)
+                .HasConversion<string>()
+                .HasMaxLength(20);
+
+            entity.Property(s => s.PermisoSolicitado)
+                .HasConversion<string>()
+                .HasMaxLength(20);
+
+            entity.Property(s => s.MotivoRechazo)
+                .HasMaxLength(500);
+
+            entity.HasIndex(s => s.SolicitanteId);
+            entity.HasIndex(s => s.Estado);
         });
     }
 }
