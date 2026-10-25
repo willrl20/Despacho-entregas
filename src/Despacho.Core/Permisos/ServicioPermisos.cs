@@ -80,9 +80,6 @@ public sealed class ServicioPermisos : IServicioPermisos
         if (solicitud == null)
             return Resultado.Falla(MensajeNoExiste);
 
-        if (solicitud.SolicitanteId == aprobadorId)
-            return Resultado.Falla(MensajePropia);
-
         if (!solicitud.Aprobar(aprobadorId, _reloj.AhoraUtc))
             return Resultado.Falla(MensajeNoPendiente);
 
@@ -102,9 +99,6 @@ public sealed class ServicioPermisos : IServicioPermisos
         var solicitud = await _db.SolicitudesPermiso.FindAsync(solicitudId);
         if (solicitud == null)
             return Resultado.Falla(MensajeNoExiste);
-
-        if (solicitud.SolicitanteId == aprobadorId)
-            return Resultado.Falla(MensajePropia);
 
         if (string.IsNullOrWhiteSpace(motivo))
             return Resultado.Falla(MensajeSinMotivo);
