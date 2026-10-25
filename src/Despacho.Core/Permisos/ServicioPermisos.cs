@@ -68,7 +68,7 @@ public sealed class ServicioPermisos : IServicioPermisos
     public async Task<IReadOnlyList<SolicitudResumen>> ListarDeUsuarioAsync(int usuarioId)
     {
         return await _db.SolicitudesPermiso
-            .Where(s => s.SolicitanteId == usuarioId)
+            .Where(s => s.SolicitanteId != usuarioId)
             .OrderByDescending(s => s.CreadaEnUtc)
             .Select(s => new SolicitudResumen(s.Id, s.SolicitanteId, s.PermisoSolicitado.ToString(), s.Estado.ToString(), s.AprobadorId, s.CreadaEnUtc, s.ResueltaEnUtc, s.MotivoRechazo))
             .ToListAsync();
