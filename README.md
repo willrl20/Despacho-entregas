@@ -253,3 +253,16 @@ dotnet test
 ```
 
 La suite está en `tests/Despacho.Core.Tests`: las pruebas de la política de contraseña, de la entidad `SolicitudPermiso` (transiciones válidas y prohibidas) y del servicio de permisos (aprobar registra quién y cuándo, aplica el rol, aprobar dos veces se rechaza sin cambiar el estado, nadie resuelve su propia solicitud y el rechazo exige motivo).
+
+## Defectos
+
+Práctica 2, variante A (matrícula 2025-1963). Cada defecto está en un commit cuyo padre es `practica-2`, con la etiqueta `practica-2-defecto-N`. Sobre cada etiqueta, `dotnet test` falla en al menos la prueba indicada; sobre `practica-2` todas pasan.
+
+| Defecto | Requisito | Prueba que lo detecta | Comportamiento que comprueba |
+|---|---|---|---|
+| 1 | RF-GP-06 | `AprobarAsync_SolicitudYaAprobada_SeRechazaYElEstadoNoCambia` | Aprobar una solicitud ya aplicada se rechaza, sigue `Aplicada` y conserva su aprobador |
+| 2 | RF-GP-06 | `MarcarAplicada_SolicitudRechazada_SeRechazaYElEstadoNoCambia` y `TransicionesSolicitud_FueraDeLaTabla_NoEstaPermitida(Rechazada, Aplicada)` | Una solicitud rechazada no puede pasar a `Aplicada` |
+| 3 | RF-GP-07 | `AprobarAsync_SolicitudPropia_SeRechazaYElEstadoNoCambia` y `RechazarAsync_SolicitudPropia_SeRechazaYElEstadoNoCambia` | Nadie aprueba ni rechaza su propia solicitud; sigue `Pendiente` |
+| 4 | RF-GP-02 | `ListarDeUsuarioAsync_ConSolicitudesDeOtros_SoloDevuelveLasPropias` | La consulta de un Estándar devuelve solo sus solicitudes |
+| 5 | RF-GP-06 | `TransicionesSolicitud_FueraDeLaTabla_NoEstaPermitida(Aprobada, Pendiente)` | Una solicitud aprobada no puede volver a `Pendiente` |
+| 6 | RF-GP-04 | `RechazarAsync_ConMotivo_RegistraMotivoYFecha` | Al rechazar se guarda el motivo escrito |
