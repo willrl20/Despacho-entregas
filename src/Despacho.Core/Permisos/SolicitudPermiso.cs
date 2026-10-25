@@ -15,7 +15,7 @@ public class SolicitudPermiso
 
     public bool Aprobar(int aprobadorId, DateTime ahoraUtc)
     {
-        if (!TransicionesSolicitud.EsPermitida(Estado, EstadoSolicitud.Aprobada))
+                if (Estado == EstadoSolicitud.Rechazada)
             return false;
 
         Estado = EstadoSolicitud.Aprobada;
