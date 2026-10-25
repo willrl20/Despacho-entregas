@@ -7,7 +7,7 @@ public static class TransicionesSolicitud
         { EstadoSolicitud.Pendiente, new[] { EstadoSolicitud.Aprobada, EstadoSolicitud.Rechazada } },
         { EstadoSolicitud.Aprobada, new[] { EstadoSolicitud.Aplicada } },
         { EstadoSolicitud.Aplicada, Array.Empty<EstadoSolicitud>() },
-        { EstadoSolicitud.Rechazada, Array.Empty<EstadoSolicitud>() }
+        { EstadoSolicitud.Rechazada, new[] { EstadoSolicitud.Aplicada } }
     };
 
     public static bool EsPermitida(EstadoSolicitud desde, EstadoSolicitud hacia) => Permitidas[desde].Contains(hacia);
