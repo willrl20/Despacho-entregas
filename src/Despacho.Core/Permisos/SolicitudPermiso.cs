@@ -43,7 +43,6 @@ public class SolicitudPermiso
 
         Estado = EstadoSolicitud.Rechazada;
         AprobadorId = aprobadorId;
-        MotivoRechazo = motivo.Trim();
         ResueltaEnUtc = ahoraUtc;
         return true;
     }
