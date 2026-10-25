@@ -6,6 +6,7 @@ namespace Despacho.Core.Tests;
 
 public class SolicitudPermisoTests
 {
+    // RF-GP-03
     [Fact]
     public void Aprobar_SolicitudPendiente_RegistraAprobadorYFecha()
     {
@@ -30,6 +31,7 @@ public class SolicitudPermisoTests
         Assert.Equal(fechaAprobacion, solicitud.ResueltaEnUtc);
     }
 
+    // RF-GP-06
     [Fact]
     public void MarcarAplicada_SolicitudRechazada_SeRechazaYElEstadoNoCambia()
     {
@@ -51,6 +53,7 @@ public class SolicitudPermisoTests
         Assert.Equal(EstadoSolicitud.Rechazada, solicitud.Estado);
     }
 
+    // RF-GP-04
     [Fact]
     public void Rechazar_SinMotivo_SeRechazaYElEstadoNoCambia()
     {
@@ -70,5 +73,41 @@ public class SolicitudPermisoTests
         Assert.False(resultado);
         Assert.Equal(EstadoSolicitud.Pendiente, solicitud.Estado);
         Assert.Null(solicitud.MotivoRechazo);
+    }
+
+    // RF-GP-06
+    [Theory]
+    [InlineData(EstadoSolicitud.Pendiente, EstadoSolicitud.Pendiente)]
+    [InlineData(EstadoSolicitud.Pendiente, EstadoSolicitud.Aplicada)]
+    [InlineData(EstadoSolicitud.Aprobada, EstadoSolicitud.Pendiente)]
+    [InlineData(EstadoSolicitud.Aprobada, EstadoSolicitud.Aprobada)]
+    [InlineData(EstadoSolicitud.Aprobada, EstadoSolicitud.Rechazada)]
+    [InlineData(EstadoSolicitud.Aplicada, EstadoSolicitud.Pendiente)]
+    [InlineData(EstadoSolicitud.Aplicada, EstadoSolicitud.Aprobada)]
+    [InlineData(EstadoSolicitud.Aplicada, EstadoSolicitud.Aplicada)]
+    [InlineData(EstadoSolicitud.Aplicada, EstadoSolicitud.Rechazada)]
+    [InlineData(EstadoSolicitud.Rechazada, EstadoSolicitud.Pendiente)]
+    [InlineData(EstadoSolicitud.Rechazada, EstadoSolicitud.Aprobada)]
+    [InlineData(EstadoSolicitud.Rechazada, EstadoSolicitud.Aplicada)]
+    [InlineData(EstadoSolicitud.Rechazada, EstadoSolicitud.Rechazada)]
+    public void TransicionesSolicitud_FueraDeLaTabla_NoEstaPermitida(EstadoSolicitud desde, EstadoSolicitud hacia)
+    {
+        // Arrange
+        // Act
+        // Assert
+        Assert.False(TransicionesSolicitud.EsPermitida(desde, hacia));
+    }
+
+    // RF-GP-06
+    [Theory]
+    [InlineData(EstadoSolicitud.Pendiente, EstadoSolicitud.Aprobada)]
+    [InlineData(EstadoSolicitud.Pendiente, EstadoSolicitud.Rechazada)]
+    [InlineData(EstadoSolicitud.Aprobada, EstadoSolicitud.Aplicada)]
+    public void TransicionesSolicitud_DeLaTabla_EstaPermitida(EstadoSolicitud desde, EstadoSolicitud hacia)
+    {
+        // Arrange
+        // Act
+        // Assert
+        Assert.True(TransicionesSolicitud.EsPermitida(desde, hacia));
     }
 }
