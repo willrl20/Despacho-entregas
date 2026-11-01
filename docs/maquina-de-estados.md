@@ -1,6 +1,6 @@
 # Máquina de estados del Pedido
 
-Los estados están en EstadoPedido y las transiciones en MaquinaEstadosPedido (src/Despacho.Negocio/Pedidos). El Pedido solo cambia de estado con CambiarEstado, que consulta la máquina.
+Los estados están en `EstadoPedido` y las transiciones en `MaquinaEstadosPedido` (`src/Despacho.Negocio/Pedidos`). El pedido solo cambia de estado con `Pedido.CambiarEstado`, que consulta la máquina. Quién puede ejecutar cada transición lo verifica `ServicioPedidos`. Esta máquina es independiente de la de Gestión de permisos (RF-NEG-09).
 
 ## Estados
 
@@ -13,13 +13,26 @@ Los estados están en EstadoPedido y las transiciones en MaquinaEstadosPedido (s
 ## Transiciones permitidas
 
 | Desde | Hacia | Quién | Condición |
-|-------|-------|-------|-----------|
-| Pendiente | Asignado | Administrador | Se asigna un repartidor al pedido |
-| Pendiente | Cancelado | Administrador o tienda | El pedido todavía no tiene repartidor |
-| Asignado | EnRuta | Repartidor asignado | El repartidor sale a entregar; se avisa al destinatario (RF-NOT-03) |
-| Asignado | Cancelado | Administrador o tienda | El pedido todavía no ha salido |
-| EnRuta | Entregado | Repartidor asignado | El repartidor confirma la entrega |
+|---|---|---|---|
+| Pendiente | Cancelado | Cliente del pedido o Administrador | Solo el cliente que hizo el pedido o un Administrador |
+| Asignado | Cancelado | Cliente del pedido o Administrador | Solo el cliente que hizo el pedido o un Administrador |
+| Pendiente | Asignado | Repartidor | Tiene el permiso Repartidor aprobado en Gestión de permisos y no es su propio pedido |
+| Asignado | EnRuta | Repartidor asignado | Es el repartidor de ese pedido |
+| EnRuta | Entregado | Repartidor asignado | Es el repartidor de ese pedido |
 
 ## Transiciones prohibidas
 
-Entregado → EnRuta está prohibida de forma explícita. Entregado y Cancelado son terminales: no salen a ningún otro estado. Cualquier transición que no esté en la tabla se rechaza.
+| Desde | Hacia | Motivo |
+|---|---|---|
+| Entregado | EnRuta | Prohibida de forma explícita en `MaquinaEstadosPedido` |
+| Pendiente | EnRuta | Primero hay que aceptar el pedido |
+| Pendiente | Entregado | No se puede entregar sin repartidor ni ruta |
+| Asignado | Entregado | Primero tiene que salir en ruta |
+| EnRuta | Cancelado | Un pedido en camino ya no se cancela |
+| Cancelado | Pendiente | Cancelado es terminal |
+
+Cualquier otra transición que no esté en la tabla de permitidas también se rechaza y el estado no cambia.
+
+## Estados terminales
+
+Entregado y Cancelado son terminales: ninguna transición parte de ellos.
