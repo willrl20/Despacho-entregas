@@ -107,9 +107,6 @@ public sealed class ServicioPedidos : IServicioPedidos
 
     public async Task<Resultado> AceptarAsync(int repartidorId, int pedidoId)
     {
-        if (!await _permisos.TienePermisoAsync(repartidorId, Permiso.Repartidor))
-            return Resultado.Falla(MensajeSinPermiso);
-
         var pedido = await _db.Pedidos.FindAsync(pedidoId);
         if (pedido == null)
             return Resultado.Falla(MensajeNoExiste);
