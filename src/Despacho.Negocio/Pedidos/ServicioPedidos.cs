@@ -178,9 +178,6 @@ public sealed class ServicioPedidos : IServicioPedidos
         if (pedido == null)
             return Resultado.Falla(MensajeNoExiste);
 
-        if (!esAdministrador && pedido.DestinatarioId != usuarioId)
-            return Resultado.Falla(MensajeNoPuedeCancelar);
-
         if (!pedido.CambiarEstado(EstadoPedido.Cancelado))
             return Resultado.Falla(MensajeTransicionInvalida);
 
