@@ -23,7 +23,7 @@ public class ServicioPermisosTests
         var aprobador = new Usuario { Id = 2, Correo = "aprobador@test.com", HashContrasena = "hash", Activada = true, Rol = Rol.Administrador };
         db.Usuarios.AddRange(solicitante, aprobador);
 
-        var solicitud = new SolicitudPermiso { SolicitanteId = 1, PermisoSolicitado = Rol.Administrador, CreadaEnUtc = RelojFijo.Ahora.AddDays(-1) };
+        var solicitud = new SolicitudPermiso { SolicitanteId = 1, PermisoSolicitado = Permiso.Administrador, CreadaEnUtc = RelojFijo.Ahora.AddDays(-1) };
         db.SolicitudesPermiso.Add(solicitud);
         await db.SaveChangesAsync();
 
@@ -54,7 +54,7 @@ public class ServicioPermisosTests
         var aprobador = new Usuario { Id = 2, Correo = "aprobador@test.com", HashContrasena = "hash", Activada = true, Rol = Rol.Administrador };
         db.Usuarios.AddRange(solicitante, aprobador);
 
-        var solicitud = new SolicitudPermiso { SolicitanteId = 1, PermisoSolicitado = Rol.Administrador, CreadaEnUtc = RelojFijo.Ahora.AddDays(-1) };
+        var solicitud = new SolicitudPermiso { SolicitanteId = 1, PermisoSolicitado = Permiso.Administrador, CreadaEnUtc = RelojFijo.Ahora.AddDays(-1) };
         db.SolicitudesPermiso.Add(solicitud);
         await db.SaveChangesAsync();
 
@@ -83,7 +83,7 @@ public class ServicioPermisosTests
         var aprobador2 = new Usuario { Id = 3, Correo = "aprobador2@test.com", HashContrasena = "hash", Activada = true, Rol = Rol.Administrador };
         db.Usuarios.AddRange(solicitante, aprobador1, aprobador2);
 
-        var solicitud = new SolicitudPermiso { SolicitanteId = 1, PermisoSolicitado = Rol.Administrador, CreadaEnUtc = RelojFijo.Ahora.AddDays(-1) };
+        var solicitud = new SolicitudPermiso { SolicitanteId = 1, PermisoSolicitado = Permiso.Administrador, CreadaEnUtc = RelojFijo.Ahora.AddDays(-1) };
         db.SolicitudesPermiso.Add(solicitud);
         await db.SaveChangesAsync();
 
@@ -113,7 +113,7 @@ public class ServicioPermisosTests
         var solicitante = new Usuario { Id = 1, Correo = "solicitante@test.com", HashContrasena = "hash", Activada = true, Rol = Rol.Estandar };
         db.Usuarios.Add(solicitante);
 
-        var solicitud = new SolicitudPermiso { SolicitanteId = 1, PermisoSolicitado = Rol.Administrador, CreadaEnUtc = RelojFijo.Ahora.AddDays(-1) };
+        var solicitud = new SolicitudPermiso { SolicitanteId = 1, PermisoSolicitado = Permiso.Administrador, CreadaEnUtc = RelojFijo.Ahora.AddDays(-1) };
         db.SolicitudesPermiso.Add(solicitud);
         await db.SaveChangesAsync();
 
@@ -143,7 +143,7 @@ public class ServicioPermisosTests
         var aprobador = new Usuario { Id = 2, Correo = "aprobador@test.com", HashContrasena = "hash", Activada = true, Rol = Rol.Administrador };
         db.Usuarios.AddRange(solicitante, aprobador);
 
-        var solicitud = new SolicitudPermiso { SolicitanteId = 1, PermisoSolicitado = Rol.Administrador, CreadaEnUtc = RelojFijo.Ahora.AddDays(-1) };
+        var solicitud = new SolicitudPermiso { SolicitanteId = 1, PermisoSolicitado = Permiso.Administrador, CreadaEnUtc = RelojFijo.Ahora.AddDays(-1) };
         db.SolicitudesPermiso.Add(solicitud);
         await db.SaveChangesAsync();
 
@@ -176,7 +176,7 @@ public class ServicioPermisosTests
         var aprobador = new Usuario { Id = 2, Correo = "aprobador@test.com", HashContrasena = "hash", Activada = true, Rol = Rol.Administrador };
         db.Usuarios.AddRange(solicitante, aprobador);
 
-        var solicitud = new SolicitudPermiso { SolicitanteId = 1, PermisoSolicitado = Rol.Administrador, CreadaEnUtc = RelojFijo.Ahora.AddDays(-1) };
+        var solicitud = new SolicitudPermiso { SolicitanteId = 1, PermisoSolicitado = Permiso.Administrador, CreadaEnUtc = RelojFijo.Ahora.AddDays(-1) };
         db.SolicitudesPermiso.Add(solicitud);
         await db.SaveChangesAsync();
 
@@ -233,8 +233,8 @@ public class ServicioPermisosTests
         var usuario2 = new Usuario { Id = 2, Correo = "usuario2@test.com", HashContrasena = "hash", Activada = true, Rol = Rol.Estandar };
         db.Usuarios.AddRange(usuario1, usuario2);
 
-        var solicitud1 = new SolicitudPermiso { SolicitanteId = 1, PermisoSolicitado = Rol.Administrador, CreadaEnUtc = RelojFijo.Ahora };
-        var solicitud2 = new SolicitudPermiso { SolicitanteId = 2, PermisoSolicitado = Rol.Administrador, CreadaEnUtc = RelojFijo.Ahora };
+        var solicitud1 = new SolicitudPermiso { SolicitanteId = 1, PermisoSolicitado = Permiso.Administrador, CreadaEnUtc = RelojFijo.Ahora };
+        var solicitud2 = new SolicitudPermiso { SolicitanteId = 2, PermisoSolicitado = Permiso.Administrador, CreadaEnUtc = RelojFijo.Ahora };
         db.SolicitudesPermiso.AddRange(solicitud1, solicitud2);
         await db.SaveChangesAsync();
 
@@ -265,7 +265,7 @@ public class ServicioPermisosTests
         var aprobador = new Usuario { Id = 2, Correo = "aprobador@test.com", HashContrasena = "hash", Activada = true, Rol = Rol.Administrador };
         db.Usuarios.AddRange(solicitante, aprobador);
 
-        var solicitud = new SolicitudPermiso { SolicitanteId = 1, PermisoSolicitado = Rol.Administrador, CreadaEnUtc = RelojFijo.Ahora.AddDays(-1) };
+        var solicitud = new SolicitudPermiso { SolicitanteId = 1, PermisoSolicitado = Permiso.Administrador, CreadaEnUtc = RelojFijo.Ahora.AddDays(-1) };
         db.SolicitudesPermiso.Add(solicitud);
         await db.SaveChangesAsync();
 
@@ -294,7 +294,7 @@ public class ServicioPermisosTests
         var solicitante = new Usuario { Id = 1, Correo = "solicitante@test.com", HashContrasena = "hash", Activada = true, Rol = Rol.Estandar };
         db.Usuarios.Add(solicitante);
 
-        var solicitud = new SolicitudPermiso { SolicitanteId = 1, PermisoSolicitado = Rol.Administrador, CreadaEnUtc = RelojFijo.Ahora.AddDays(-1) };
+        var solicitud = new SolicitudPermiso { SolicitanteId = 1, PermisoSolicitado = Permiso.Administrador, CreadaEnUtc = RelojFijo.Ahora.AddDays(-1) };
         db.SolicitudesPermiso.Add(solicitud);
         await db.SaveChangesAsync();
 

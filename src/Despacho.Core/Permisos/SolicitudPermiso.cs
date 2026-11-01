@@ -1,12 +1,10 @@
-using Despacho.Core.Usuarios;
-
 namespace Despacho.Core.Permisos;
 
 public class SolicitudPermiso
 {
     public int Id { get; set; }
     public int SolicitanteId { get; set; }
-    public Rol PermisoSolicitado { get; set; }
+    public Permiso PermisoSolicitado { get; set; }
     public EstadoSolicitud Estado { get; private set; } = EstadoSolicitud.Pendiente;
     public int? AprobadorId { get; private set; }
     public DateTime CreadaEnUtc { get; set; }
