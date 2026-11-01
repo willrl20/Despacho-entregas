@@ -1,6 +1,5 @@
 using Despacho.Core.Permisos;
 using Despacho.Core.Tests.Dobles;
-using Despacho.Core.Usuarios;
 
 namespace Despacho.Core.Tests;
 
@@ -15,7 +14,7 @@ public class SolicitudPermisoTests
         {
             Id = 1,
             SolicitanteId = 10,
-            PermisoSolicitado = Rol.Administrador,
+            PermisoSolicitado = Permiso.Administrador,
             CreadaEnUtc = RelojFijo.Ahora.AddDays(-1)
         };
         var aprobadorId = 20;
@@ -40,7 +39,7 @@ public class SolicitudPermisoTests
         {
             Id = 1,
             SolicitanteId = 10,
-            PermisoSolicitado = Rol.Administrador,
+            PermisoSolicitado = Permiso.Administrador,
             CreadaEnUtc = RelojFijo.Ahora.AddDays(-1)
         };
         solicitud.Rechazar(20, "No cumple requisitos", RelojFijo.Ahora);
@@ -62,7 +61,7 @@ public class SolicitudPermisoTests
         {
             Id = 1,
             SolicitanteId = 10,
-            PermisoSolicitado = Rol.Administrador,
+            PermisoSolicitado = Permiso.Administrador,
             CreadaEnUtc = RelojFijo.Ahora.AddDays(-1)
         };
 

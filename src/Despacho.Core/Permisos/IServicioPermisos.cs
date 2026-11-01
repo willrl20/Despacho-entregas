@@ -9,4 +9,5 @@ public interface IServicioPermisos
     Task<IReadOnlyList<SolicitudResumen>> ListarDeUsuarioAsync(int usuarioId);
     Task<Resultado> AprobarAsync(int aprobadorId, int solicitudId);
     Task<Resultado> RechazarAsync(int aprobadorId, int solicitudId, string? motivo);
+    Task<bool> TienePermisoAsync(int usuarioId, Permiso permiso);
 }

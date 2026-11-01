@@ -27,18 +27,18 @@ public sealed class ServicioPermisos : IServicioPermisos
 
     public async Task<Resultado<int>> CrearAsync(int solicitanteId, string? permiso)
     {
-        if (!Enum.TryParse<Rol>(permiso, true, out var rol) || !Enum.IsDefined(rol))
+        if (!Enum.TryParse<Permiso>(permiso, true, out var permisoPedido) || !Enum.IsDefined(permisoPedido))
             return Resultado<int>.Falla(MensajePermisoInvalido);
 
         var usuario = await _db.Usuarios.FindAsync(solicitanteId);
         if (usuario == null)
             return Resultado<int>.Falla(MensajePermisoInvalido);
 
-        if (usuario.Rol == rol)
+        if (await TienePermisoAsync(solicitanteId, permisoPedido))
             return Resultado<int>.Falla(MensajeYaTienePermiso);
 
         var existePendiente = await _db.SolicitudesPermiso
-            .AnyAsync(s => s.SolicitanteId == solicitanteId && s.PermisoSolicitado == rol && s.Estado == EstadoSolicitud.Pendiente);
+            .AnyAsync(s => s.SolicitanteId == solicitanteId && s.PermisoSolicitado == permisoPedido && s.Estado == EstadoSolicitud.Pendiente);
 
         if (existePendiente)
             return Resultado<int>.Falla(MensajeYaPendiente);
@@ -46,7 +46,7 @@ public sealed class ServicioPermisos : IServicioPermisos
         var solicitud = new SolicitudPermiso
         {
             SolicitanteId = solicitanteId,
-            PermisoSolicitado = rol,
+            PermisoSolicitado = permisoPedido,
             CreadaEnUtc = _reloj.AhoraUtc
         };
 
@@ -90,7 +90,7 @@ public sealed class ServicioPermisos : IServicioPermisos
         if (usuario == null)
             return Resultado.Falla(MensajeNoExiste);
 
-        usuario.Rol = solicitud.PermisoSolicitado;
+        AplicarPermiso(usuario, solicitud.PermisoSolicitado);
         solicitud.MarcarAplicada();
 
         await _db.SaveChangesAsync();
@@ -117,5 +117,39 @@ public sealed class ServicioPermisos : IServicioPermisos
 
         await _db.SaveChangesAsync();
         return Resultado.Ok();
+    }
+
+    public async Task<bool> TienePermisoAsync(int usuarioId, Permiso permiso)
+    {
+        if (permiso == Permiso.Administrador)
+        {
+            var usuario = await _db.Usuarios.FindAsync(usuarioId);
+            return usuario != null && usuario.Rol == Rol.Administrador;
+        }
+
+        return await _db.PermisosConcedidos.AnyAsync(p => p.UsuarioId == usuarioId && p.Permiso == permiso);
+    }
+
+    private void AplicarPermiso(Usuario usuario, Permiso permiso)
+    {
+        if (permiso == Permiso.Administrador)
+        {
+            usuario.Rol = Rol.Administrador;
+        }
+        else if (permiso == Permiso.Repartidor)
+        {
+            var existeEnBd = _db.PermisosConcedidos.Local.Any(p => p.UsuarioId == usuario.Id && p.Permiso == permiso)
+                || _db.PermisosConcedidos.Any(p => p.UsuarioId == usuario.Id && p.Permiso == permiso);
+
+            if (!existeEnBd)
+            {
+                _db.PermisosConcedidos.Add(new PermisoConcedido
+                {
+                    UsuarioId = usuario.Id,
+                    Permiso = permiso,
+                    ConcedidoEnUtc = _reloj.AhoraUtc
+                });
+            }
+        }
     }
 }

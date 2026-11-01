@@ -19,6 +19,7 @@ public class CoreDbContext : DbContext
     public DbSet<Sesion> Sesiones => Set<Sesion>();
     public DbSet<CodigoRecuperacion> CodigosRecuperacion => Set<CodigoRecuperacion>();
     public DbSet<SolicitudPermiso> SolicitudesPermiso => Set<SolicitudPermiso>();
+    public DbSet<PermisoConcedido> PermisosConcedidos => Set<PermisoConcedido>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -105,6 +106,16 @@ public class CoreDbContext : DbContext
 
             entity.HasIndex(s => s.SolicitanteId);
             entity.HasIndex(s => s.Estado);
+        });
+
+        modelBuilder.Entity<PermisoConcedido>(entity =>
+        {
+            entity.Property(p => p.Permiso)
+                .HasConversion<string>()
+                .HasMaxLength(20);
+
+            entity.HasIndex(p => new { p.UsuarioId, p.Permiso })
+                .IsUnique();
         });
     }
 }

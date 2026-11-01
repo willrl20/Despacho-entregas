@@ -254,7 +254,33 @@ dotnet test
 
 La suite está en `tests/Despacho.Core.Tests`: las pruebas de la política de contraseña, de la entidad `SolicitudPermiso` (transiciones válidas y prohibidas) y del servicio de permisos (aprobar registra quién y cuándo, aplica el rol, aprobar dos veces se rechaza sin cambiar el estado, nadie resuelve su propia solicitud y el rechazo exige motivo).
 
+El mismo comando ejecuta también `tests/Despacho.Negocio.Tests`: una prueba por cada fila de las tablas de transiciones permitidas y prohibidas de `docs/maquina-de-estados.md`, la prueba de que de los estados terminales no se sale, las pruebas del servicio de pedidos y la prueba de integración con Gestión de permisos (`IntegracionPermisosPedidosTests`), que usa los componentes reales sin levantar la aplicación.
+
+## Módulo de negocio: pedidos (Práctica 3)
+
+Un cliente es un usuario Estándar que hace pedidos. Un repartidor es un usuario Estándar con el permiso **Repartidor** aprobado en Gestión de permisos: lo pide con `POST /api/solicitudes` y `{"permiso":"Repartidor"}`, y un Administrador lo aprueba con `POST /api/solicitudes/{id}/aprobar`. La máquina de estados del pedido está en `docs/maquina-de-estados.md` y en `src/Despacho.Negocio/Pedidos/MaquinaEstadosPedido.cs`. Todas las operaciones usan `Authorization: Bearer <token>`.
+
+Cuerpo para registrar un pedido:
+
+```
+{"tiendaId":1,"latitud":18.5,"longitud":-69.8,"referencia":"Casa azul","lineas":[{"producto":"Pan","cantidad":2,"precioUnitario":50}]}
+```
+
+| Operación | Quién | Endpoint | Cómo provocarla y resultado esperado |
+|---|---|---|---|
+| Registrar pedido | Estándar | `POST /api/pedidos` | Con el cuerpo de arriba devuelve su `id` y nace `Pendiente`. Sin líneas o con coordenadas fuera de rango: "Los datos del pedido no son válidos." |
+| Mis pedidos | Estándar | `GET /api/pedidos/mios` | Solo los pedidos de ese cliente |
+| Todos los pedidos | Administrador | `GET /api/pedidos` | Un Estándar recibe 403 |
+| Pedidos disponibles | Estándar con permiso Repartidor | `GET /api/pedidos/disponibles` | Sin el permiso aprobado: 403 "Necesitas el permiso Repartidor aprobado.". Con el permiso: los pendientes, sin la ubicación |
+| Aceptar pedido | Estándar con permiso Repartidor | `POST /api/pedidos/{id}/aceptar` | Sin el permiso aprobado se rechaza; después de que el Administrador lo aprueba: "Pedido aceptado." y queda `Asignado` |
+| Ver destino | Repartidor asignado | `GET /api/pedidos/{id}/destino` | Devuelve latitud, longitud y referencia. Cualquier otro usuario: "No puedes ver el destino de este pedido." |
+| Marcar en ruta | Repartidor asignado | `POST /api/pedidos/{id}/en-ruta` | Queda `EnRuta`. Otro repartidor: "No eres el repartidor de este pedido." |
+| Confirmar entrega | Repartidor asignado | `POST /api/pedidos/{id}/entregar` | Queda `Entregado` |
+| Cancelar | Cliente del pedido o Administrador | `POST /api/pedidos/{id}/cancelar` | Desde `Pendiente` o `Asignado` queda `Cancelado`. Otro cliente: "Solo el cliente del pedido o un Administrador pueden cancelarlo." Un pedido `EnRuta` o `Entregado`: "El pedido no puede cambiar a ese estado." |
+
 ## Defectos
+
+### Práctica 2
 
 Práctica 2, variante A (matrícula 2025-1963). Cada defecto está en un commit cuyo padre es `practica-2`, con la etiqueta `practica-2-defecto-N`. Sobre cada etiqueta, `dotnet test` falla en al menos la prueba indicada; sobre `practica-2` todas pasan.
 
@@ -266,3 +292,14 @@ Práctica 2, variante A (matrícula 2025-1963). Cada defecto está en un commit 
 | 4 | RF-GP-02 | `ListarDeUsuarioAsync_ConSolicitudesDeOtros_SoloDevuelveLasPropias` | La consulta de un Estándar devuelve solo sus solicitudes |
 | 5 | RF-GP-06 | `TransicionesSolicitud_FueraDeLaTabla_NoEstaPermitida(Aprobada, Pendiente)` | Una solicitud aprobada no puede volver a `Pendiente` |
 | 6 | RF-GP-04 | `RechazarAsync_ConMotivo_RegistraMotivoYFecha` | Al rechazar se guarda el motivo escrito |
+
+### Práctica 3
+
+Cada defecto está en un commit cuyo padre es `practica-3`, con la etiqueta `practica-3-defecto-N`. Sobre cada etiqueta, `dotnet test` falla en al menos la prueba indicada; sobre `practica-3` todas pasan.
+
+| Defecto | Qué se planta | Prueba que lo detecta | Comportamiento que comprueba |
+|---|---|---|---|
+| 1 | La primera prohibida (Pendiente → EnRuta) pasa a permitida | `CambiarEstado_TransicionProhibida_SeRechazaYElEstadoNoCambia(Pendiente, EnRuta)` | Un pedido pendiente no puede pasar directo a `EnRuta` |
+| 2 | Una transición que parte del terminal `Cancelado` | `EstadoTerminal_NingunaTransicionParteDeEl(Cancelado)` | Ninguna transición parte de un estado terminal |
+| 3 | Se elimina la condición de cancelar (solo el cliente del pedido o un Administrador) | `CancelarAsync_PorOtroCliente_SeRechazaYElEstadoNoCambia` | Otro cliente no puede cancelar y el pedido sigue `Pendiente` |
+| 4 | Se elimina la consulta a Gestión de permisos al aceptar | `AceptarAsync_ConSolicitudSinAprobar_SeRechazaYElPedidoSiguePendiente` | Sin el permiso Repartidor aprobado no se acepta el pedido |
