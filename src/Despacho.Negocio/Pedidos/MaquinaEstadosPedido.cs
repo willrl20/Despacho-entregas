@@ -8,7 +8,7 @@ public static class MaquinaEstadosPedido
         { EstadoPedido.Asignado, new[] { EstadoPedido.EnRuta, EstadoPedido.Cancelado } },
         { EstadoPedido.EnRuta, new[] { EstadoPedido.Entregado } },
         { EstadoPedido.Entregado, Array.Empty<EstadoPedido>() },
-        { EstadoPedido.Cancelado, Array.Empty<EstadoPedido>() }
+        { EstadoPedido.Cancelado, new[] { EstadoPedido.Pendiente } }
     };
 
     private static readonly (EstadoPedido Desde, EstadoPedido Hacia)[] Prohibidas =
