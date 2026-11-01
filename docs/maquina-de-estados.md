@@ -24,8 +24,8 @@ Los estados están en `EstadoPedido` y las transiciones en `MaquinaEstadosPedido
 
 | Desde | Hacia | Motivo |
 |---|---|---|
-| Entregado | EnRuta | Prohibida de forma explícita en `MaquinaEstadosPedido` |
 | Pendiente | EnRuta | Primero hay que aceptar el pedido |
+| Entregado | EnRuta | Prohibida de forma explícita en `MaquinaEstadosPedido` |
 | Pendiente | Entregado | No se puede entregar sin repartidor ni ruta |
 | Asignado | Entregado | Primero tiene que salir en ruta |
 | EnRuta | Cancelado | Un pedido en camino ya no se cancela |
