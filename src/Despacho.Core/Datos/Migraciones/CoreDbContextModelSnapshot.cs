@@ -92,6 +92,33 @@ namespace Despacho.Core.Datos.Migraciones
                     b.ToTable("CorreosEnCola");
                 });
 
+            modelBuilder.Entity("Despacho.Core.Permisos.PermisoConcedido", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("ConcedidoEnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Permiso")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<int>("UsuarioId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UsuarioId", "Permiso")
+                        .IsUnique();
+
+                    b.ToTable("PermisosConcedidos");
+                });
+
             modelBuilder.Entity("Despacho.Core.Permisos.SolicitudPermiso", b =>
                 {
                     b.Property<int>("Id")
