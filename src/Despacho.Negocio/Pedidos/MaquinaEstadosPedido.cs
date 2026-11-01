@@ -4,7 +4,7 @@ public static class MaquinaEstadosPedido
 {
     private static readonly Dictionary<EstadoPedido, EstadoPedido[]> Transiciones = new()
     {
-        { EstadoPedido.Pendiente, new[] { EstadoPedido.Asignado, EstadoPedido.Cancelado } },
+        { EstadoPedido.Pendiente, new[] { EstadoPedido.Asignado, EstadoPedido.Cancelado, EstadoPedido.EnRuta } },
         { EstadoPedido.Asignado, new[] { EstadoPedido.EnRuta, EstadoPedido.Cancelado } },
         { EstadoPedido.EnRuta, new[] { EstadoPedido.Entregado } },
         { EstadoPedido.Entregado, Array.Empty<EstadoPedido>() },
