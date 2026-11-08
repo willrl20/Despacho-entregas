@@ -20,12 +20,7 @@ Proyecto de **Programación III (TDS-007)** · ITLA · 2026-C-3 · Versión 0.1 
 
 ## Arquitectura
 
-El proyecto tiene dos partes. El **Core** es la especificación fija del
-curso, igual para los 25 proyectos. El **módulo de negocio** es el
-dominio propio: el despacho de entregas.
-
-La dependencia va en un solo sentido: el módulo de negocio consume el
-Core, y el Core no conoce el módulo de negocio (RD-03).
+El Core maneja los usuarios, las sesiones, los permisos y los correos. El módulo de negocio maneja los pedidos y sus entregas. Los pedidos usan el Core, pero el Core no depende de los pedidos (RD-03).
 
 ### Diagrama de componentes
 
