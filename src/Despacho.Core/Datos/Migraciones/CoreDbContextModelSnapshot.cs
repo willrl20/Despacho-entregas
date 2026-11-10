@@ -92,6 +92,51 @@ namespace Despacho.Core.Datos.Migraciones
                     b.ToTable("CorreosEnCola");
                 });
 
+            modelBuilder.Entity("Despacho.Core.Documentos.Documento", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Eliminado")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("EliminadoEnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("NombreAlmacenado")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("PropietarioId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("SubidoEnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("TamanoBytes")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("TipoContenido")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PropietarioId");
+
+                    b.ToTable("Documentos");
+                });
+
             modelBuilder.Entity("Despacho.Core.Permisos.PermisoConcedido", b =>
                 {
                     b.Property<int>("Id")

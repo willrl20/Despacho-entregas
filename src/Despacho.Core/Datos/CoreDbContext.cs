@@ -1,5 +1,6 @@
 using Despacho.Core.Contrasenas;
 using Despacho.Core.Correos;
+using Despacho.Core.Documentos;
 using Despacho.Core.Permisos;
 using Despacho.Core.Sesiones;
 using Despacho.Core.Usuarios;
@@ -20,6 +21,7 @@ public class CoreDbContext : DbContext
     public DbSet<CodigoRecuperacion> CodigosRecuperacion => Set<CodigoRecuperacion>();
     public DbSet<SolicitudPermiso> SolicitudesPermiso => Set<SolicitudPermiso>();
     public DbSet<PermisoConcedido> PermisosConcedidos => Set<PermisoConcedido>();
+    public DbSet<Documento> Documentos => Set<Documento>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -116,6 +118,23 @@ public class CoreDbContext : DbContext
 
             entity.HasIndex(p => new { p.UsuarioId, p.Permiso })
                 .IsUnique();
+        });
+
+        modelBuilder.Entity<Documento>(entity =>
+        {
+            entity.Property(d => d.Nombre)
+                .IsRequired()
+                .HasMaxLength(255);
+
+            entity.Property(d => d.TipoContenido)
+                .IsRequired()
+                .HasMaxLength(100);
+
+            entity.Property(d => d.NombreAlmacenado)
+                .IsRequired()
+                .HasMaxLength(100);
+
+            entity.HasIndex(d => d.PropietarioId);
         });
     }
 }
