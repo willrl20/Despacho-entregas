@@ -1,0 +1,10 @@
+**/bin/
+**/obj/
+.git/
+.vs/
+.vscode/
+tests/
+docs/
+src/Despacho.Api/documentos/
+.env
+*.md

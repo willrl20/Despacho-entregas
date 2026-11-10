@@ -41,6 +41,26 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
+using (var alcanceMigraciones = app.Services.CreateScope())
+{
+    var core = alcanceMigraciones.ServiceProvider.GetRequiredService<CoreDbContext>();
+    var negocio = alcanceMigraciones.ServiceProvider.GetRequiredService<NegocioDbContext>();
+    for (var intento = 1; ; intento++)
+    {
+        try
+        {
+            await core.Database.MigrateAsync();
+            await negocio.Database.MigrateAsync();
+            break;
+        }
+        catch (Exception) when (intento < 20)
+        {
+            Console.WriteLine($"La base de datos no está lista (intento {intento}). Reintentando en 5 segundos...");
+            await Task.Delay(TimeSpan.FromSeconds(5));
+        }
+    }
+}
+
 using (var alcance = app.Services.CreateScope())
 {
     var administracion = alcance.ServiceProvider.GetRequiredService<IServicioAdministracion>();

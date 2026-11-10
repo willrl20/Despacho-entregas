@@ -1,0 +1,41 @@
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - datos-sql:/var/opt/mssql
+
+  api:
+    build: .
+    depends_on:
+      - db
+    ports:
+      - "8080:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      DESPACHO_CONEXION: "Server=db;Database=DespachoEntregas;User Id=sa;Password=${DB_PASSWORD};TrustServerCertificate=True"
+      DESPACHO_URL_ACTIVACION: http://localhost:8080/api/cuentas/activar
+      DESPACHO_ADMIN_CORREO: ${DESPACHO_ADMIN_CORREO}
+      DESPACHO_RUTA_DOCUMENTOS: /app/documentos
+      OPENCAGE_API_KEY: ${OPENCAGE_API_KEY}
+    volumes:
+      - documentos:/app/documentos
+
+  enviador:
+    build: .
+    depends_on:
+      - api
+    entrypoint: ["sh", "-c", "while true; do dotnet /app/enviador/Despacho.EnviadorCorreos.dll; sleep 30; done"]
+    environment:
+      DESPACHO_CONEXION: "Server=db;Database=DespachoEntregas;User Id=sa;Password=${DB_PASSWORD};TrustServerCertificate=True"
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PUERTO: ${SMTP_PUERTO}
+      SMTP_USUARIO: ${SMTP_USUARIO}
+      SMTP_CONTRASENA: ${SMTP_CONTRASENA}
+      SMTP_REMITENTE: ${SMTP_REMITENTE}
+
+volumes:
+  datos-sql:
+  documentos:
