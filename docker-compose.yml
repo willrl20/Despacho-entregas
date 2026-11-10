@@ -20,6 +20,7 @@ services:
       DESPACHO_ADMIN_CORREO: ${DESPACHO_ADMIN_CORREO}
       DESPACHO_RUTA_DOCUMENTOS: /app/documentos
       OPENCAGE_API_KEY: ${OPENCAGE_API_KEY}
+      Logging__LogLevel__System.Net.Http.HttpClient: Warning
     volumes:
       - documentos:/app/documentos
 
