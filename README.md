@@ -298,3 +298,71 @@ Cada defecto está en un commit cuyo padre es `practica-3`, con la etiqueta `pra
 | 2 | Una transición que parte del terminal `Cancelado` | `EstadoTerminal_NingunaTransicionParteDeEl(Cancelado)` | Ninguna transición parte de un estado terminal |
 | 3 | Se elimina la condición de cancelar (solo el cliente del pedido o un Administrador) | `CancelarAsync_PorOtroCliente_SeRechazaYElEstadoNoCambia` | Otro cliente no puede cancelar y el pedido sigue `Pendiente` |
 | 4 | Se elimina la consulta a Gestión de permisos al aceptar | `AceptarAsync_ConSolicitudSinAprobar_SeRechazaYElPedidoSiguePendiente` | Sin el permiso Repartidor aprobado no se acepta el pedido |
+
+## Contenedor
+
+Solo hace falta Docker (con Docker Desktop encendido). Desde la raíz de un clon limpio:
+
+1. Copia el archivo de ejemplo de variables:
+   - Windows (PowerShell): `Copy-Item .env.example .env`
+   - Linux o macOS: `cp .env.example .env`
+2. Levanta todo con un solo comando:
+
+```
+docker compose up --build
+```
+
+La Api responde en **http://localhost:8080** (Swagger en http://localhost:8080/swagger). La base de datos y todas sus tablas se crean solas al arrancar; no hay que ejecutar migraciones a mano.
+
+| Servicio | Qué es | Puerto |
+|---|---|---|
+| `api` | La Api | 8080 (el único publicado) |
+| `db` | SQL Server 2022 | No se publica; la Api lo encuentra por el nombre `db` |
+| `enviador` | Envía los correos de la cola cada 30 segundos | No publica |
+
+Los datos sobreviven en dos volúmenes con nombre: `datos-sql` (la base de datos) y `documentos` (los archivos subidos).
+
+Para detener el proyecto: `Ctrl + C` en la terminal donde corre, o `docker compose down` desde otra terminal. `docker compose down` borra los contenedores pero conserva los volúmenes: al volver a levantar, los usuarios y los documentos siguen ahí. (`docker compose down -v` sí borra los datos.)
+
+**Correos:** con los valores de ejemplo del `.env`, los correos quedan en la cola pero no salen. Para que lleguen, pon en `.env` una cuenta de Gmail con su contraseña de aplicación (`SMTP_USUARIO`, `SMTP_CONTRASENA`, `SMTP_REMITENTE`). Sin correo real, el token de activación se puede leer de la base:
+
+```
+docker compose exec db /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "Ejemplo_Clave123!" -C -d DespachoEntregas -h -1 -W -Q "SELECT TOP 1 t.Token FROM TokensActivacion t JOIN Usuarios u ON u.Id = t.UsuarioId WHERE u.Correo = 'CORREO' ORDER BY t.Id DESC"
+```
+
+y la cuenta se activa abriendo `http://localhost:8080/api/cuentas/activar?token=TOKEN`.
+
+**Administrador inicial:** registra y activa la cuenta cuyo correo está en `DESPACHO_ADMIN_CORREO` del `.env`, y luego ejecuta `docker compose restart api`. Al arrancar, la Api convierte esa cuenta en Administrador.
+
+## Manejador de documentos
+
+Todas las operaciones requieren sesión (`Authorization: Bearer <token>`).
+
+| Operación | Endpoint | Resultado esperado |
+|---|---|---|
+| Subir | `POST /api/documentos` con un formulario multipart y el campo `archivo` | Guarda nombre, tipo, tamaño, fecha y dueño. Un archivo ausente o vacío: "Selecciona un archivo que no esté vacío." |
+| Listar | `GET /api/documentos` | Solo los documentos propios y no eliminados; el Administrador ve los de todos |
+| Descargar | `GET /api/documentos/{id}/descargar` | El dueño o un Administrador lo descargan; otro usuario recibe 403 |
+| Eliminar | `DELETE /api/documentos/{id}` | Eliminación lógica: deja de aparecer en el listado, pero el registro sigue en la base con `Eliminado = 1`. Otro usuario recibe 403 |
+
+Ejemplo para subir con curl:
+
+```
+curl -X POST http://localhost:8080/api/documentos -H "Authorization: Bearer TOKEN" -F "archivo=@guia.txt;type=text/plain"
+```
+
+## API externa
+
+**API:** OpenCage Geocoding (geocodificación inversa): convierte una latitud y longitud en una dirección legible.
+
+**Operación que la usa:** `GET /api/pedidos/{id}/direccion`. Solo el repartidor asignado al pedido la puede usar, cuando el pedido está `Asignado` o `EnRuta`. Toma el punto de entrega guardado en el pedido y devuelve la dirección para que el repartidor sepa a dónde ir.
+
+**Variable:** `OPENCAGE_API_KEY`, en el archivo `.env`, que no se versiona. La clave no está en el código, en el `Dockerfile`, en el `docker-compose.yml` ni en ningún commit. La clave gratuita se obtiene en https://opencagedata.com.
+
+**Ejemplo real de respuesta** (pedido con destino en latitud 18.4861 y longitud -69.8571):
+
+```
+{"latitud":18.4861,"longitud":-69.8571,"referencia":"Casa azul","direccion":"Calle 1A, Jardines de Alma Rosa, Santo Domingo Este, Santo Domingo, 03006, República Dominicana"}
+```
+
+**Sin clave o con la API caída:** la operación responde `503` con un mensaje claro ("El servicio de direcciones no está configurado." o "El servicio de direcciones no está disponible. Intenta más tarde.") y el resto del proyecto sigue funcionando. Con la clave de ejemplo del `.env.example`, la respuesta es la segunda.
