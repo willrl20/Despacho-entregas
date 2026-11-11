@@ -435,3 +435,5 @@ appsettings.*.local.json
 
 # Docker
 docker-compose.override.yml
+
+src/Despacho.Api/documentos/

@@ -2,6 +2,7 @@ using Despacho.Api.Contratos;
 using Despacho.Api.Seguridad;
 using Despacho.Core.Sesiones;
 using Despacho.Core.Usuarios;
+using Despacho.Negocio.Direcciones;
 using Despacho.Negocio.Pedidos;
 
 namespace Despacho.Api.Endpoints;
@@ -88,6 +89,17 @@ public static class PedidosEndpoints
                 return Results.Ok(new { mensaje = "Pedido cancelado." });
             return Results.BadRequest(new { error = resultado.Error });
         }).RequiereSesion();
+
+        grupo.MapGet("/{id:int}/direccion", async (int id, HttpContext http, IServicioDirecciones servicio) =>
+        {
+            var usuario = (UsuarioActual)http.Items[FiltroRol.ClaveUsuario]!;
+            var resultado = await servicio.VerDireccionDestinoAsync(usuario.Id, id);
+            if (resultado.Exito)
+                return Results.Ok(resultado.Valor);
+            if (resultado.Error == GeocodificadorOpenCage.MensajeNoConfigurado || resultado.Error == GeocodificadorOpenCage.MensajeNoDisponible)
+                return Results.Json(new { error = resultado.Error }, statusCode: StatusCodes.Status503ServiceUnavailable);
+            return Results.BadRequest(new { error = resultado.Error });
+        }).RequiereRol(Rol.Estandar);
 
         return app;
     }
