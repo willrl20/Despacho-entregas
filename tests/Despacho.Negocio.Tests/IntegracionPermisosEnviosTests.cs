@@ -2,17 +2,30 @@ using Despacho.Core.Datos;
 using Despacho.Core.Permisos;
 using Despacho.Core.Usuarios;
 using Despacho.Negocio.Datos;
-using Despacho.Negocio.Pedidos;
+using Despacho.Negocio.Envios;
 using Despacho.Negocio.Tests.Dobles;
 using Microsoft.EntityFrameworkCore;
 
 namespace Despacho.Negocio.Tests;
 
-public class IntegracionPermisosPedidosTests
+public class IntegracionPermisosEnviosTests
 {
+    private static DatosEnvio DatosValidos() => new DatosEnvio(
+        "Enviar",
+        18.4861,
+        -69.8571,
+        "Casa azul",
+        18.4700,
+        -69.8900,
+        "Oficina",
+        "Ana Perez",
+        "809-555-1234",
+        "Documentos",
+        "Pequeno");
+
     // Integración RF-NEG-02 con Gestión de permisos
     [Fact]
-    public async Task AceptarAsync_ConSolicitudSinAprobar_SeRechazaYElPedidoSiguePendiente()
+    public async Task AceptarAsync_ConSolicitudSinAprobar_SeRechazaYElEnvioSiguePendiente()
     {
         // Arrange
         var coreDb = new CoreDbContext(new DbContextOptionsBuilder<CoreDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
@@ -24,26 +37,25 @@ public class IntegracionPermisosPedidosTests
         await coreDb.SaveChangesAsync();
 
         var servicioPermisos = new ServicioPermisos(coreDb, reloj);
-        var servicio = new ServicioPedidos(negocioDb, servicioPermisos, reloj);
+        var servicio = new ServicioEnvios(negocioDb, servicioPermisos, reloj);
 
-        var lineas = new List<LineaNueva> { new LineaNueva("Pan", 2, 50m) };
-        var registrado = await servicio.RegistrarAsync(30, 1, 18.5, -69.8, "Casa azul", lineas);
+        var creado = await servicio.CrearAsync(30, DatosValidos());
 
         await servicioPermisos.CrearAsync(10, "Repartidor");
 
         // Act
-        var resultado = await servicio.AceptarAsync(10, registrado.Valor);
+        var resultado = await servicio.AceptarAsync(10, creado.Valor);
 
         // Assert
         Assert.False(resultado.Exito);
-        Assert.Equal("Necesitas el permiso Repartidor aprobado.", resultado.Error);
-        var pedido = await negocioDb.Pedidos.FindAsync(registrado.Valor);
-        Assert.Equal(EstadoPedido.Pendiente, pedido!.Estado);
+        Assert.Equal(ServicioEnvios.MensajeSinPermiso, resultado.Error);
+        var envio = await negocioDb.Envios.FindAsync(creado.Valor);
+        Assert.Equal(EstadoEnvio.Pendiente, envio!.Estado);
     }
 
     // Integración RF-NEG-02 con Gestión de permisos
     [Fact]
-    public async Task AceptarAsync_DespuesDeAprobarElPermiso_ElPedidoQuedaAsignado()
+    public async Task AceptarAsync_DespuesDeAprobarElPermiso_ElEnvioQuedaAsignado()
     {
         // Arrange
         var coreDb = new CoreDbContext(new DbContextOptionsBuilder<CoreDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
@@ -55,22 +67,21 @@ public class IntegracionPermisosPedidosTests
         await coreDb.SaveChangesAsync();
 
         var servicioPermisos = new ServicioPermisos(coreDb, reloj);
-        var servicio = new ServicioPedidos(negocioDb, servicioPermisos, reloj);
+        var servicio = new ServicioEnvios(negocioDb, servicioPermisos, reloj);
 
-        var lineas = new List<LineaNueva> { new LineaNueva("Pan", 2, 50m) };
-        var registrado = await servicio.RegistrarAsync(30, 1, 18.5, -69.8, "Casa azul", lineas);
+        var creado = await servicio.CrearAsync(30, DatosValidos());
 
         var solicitud = await servicioPermisos.CrearAsync(10, "Repartidor");
         var aprobacion = await servicioPermisos.AprobarAsync(20, solicitud.Valor);
         Assert.True(aprobacion.Exito);
 
         // Act
-        var resultado = await servicio.AceptarAsync(10, registrado.Valor);
+        var resultado = await servicio.AceptarAsync(10, creado.Valor);
 
         // Assert
         Assert.True(resultado.Exito);
-        var pedido = await negocioDb.Pedidos.FindAsync(registrado.Valor);
-        Assert.Equal(EstadoPedido.Asignado, pedido!.Estado);
-        Assert.Equal(10, pedido.RepartidorId);
+        var envio = await negocioDb.Envios.FindAsync(creado.Valor);
+        Assert.Equal(EstadoEnvio.Asignado, envio!.Estado);
+        Assert.Equal(10, envio.RepartidorId);
     }
 }

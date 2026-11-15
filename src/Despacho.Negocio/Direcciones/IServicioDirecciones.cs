@@ -4,5 +4,5 @@ namespace Despacho.Negocio.Direcciones;
 
 public interface IServicioDirecciones
 {
-    Task<Resultado<DireccionDestino>> VerDireccionDestinoAsync(int repartidorId, int pedidoId);
+    Task<Resultado<DireccionesEnvio>> VerDireccionesAsync(int repartidorId, int envioId);
 }

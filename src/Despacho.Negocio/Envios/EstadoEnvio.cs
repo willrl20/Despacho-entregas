@@ -1,6 +1,6 @@
-namespace Despacho.Negocio.Pedidos;
+namespace Despacho.Negocio.Envios;
 
-public enum EstadoPedido
+public enum EstadoEnvio
 {
     Pendiente,
     Asignado,
