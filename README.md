@@ -249,29 +249,47 @@ dotnet test
 
 La suite está en `tests/Despacho.Core.Tests`: las pruebas de la política de contraseña, de la entidad `SolicitudPermiso` (transiciones válidas y prohibidas) y del servicio de permisos (aprobar registra quién y cuándo, aplica el rol, aprobar dos veces se rechaza sin cambiar el estado, nadie resuelve su propia solicitud y el rechazo exige motivo).
 
-El mismo comando ejecuta también `tests/Despacho.Negocio.Tests`: una prueba por cada fila de las tablas de transiciones permitidas y prohibidas de `docs/maquina-de-estados.md`, la prueba de que de los estados terminales no se sale, las pruebas del servicio de pedidos y la prueba de integración con Gestión de permisos (`IntegracionPermisosPedidosTests`), que usa los componentes reales sin levantar la aplicación.
+El mismo comando ejecuta también `tests/Despacho.Negocio.Tests`: una prueba por cada fila de las tablas de transiciones permitidas y prohibidas de `docs/maquina-de-estados.md`, la prueba de que de los estados terminales no se sale, las pruebas del precio y del servicio de envíos y la prueba de integración con Gestión de permisos (`IntegracionPermisosEnviosTests`), que usa los componentes reales sin levantar la aplicación.
 
-## Módulo de negocio: pedidos (Práctica 3)
+## Módulo de negocio: envíos
 
-Un cliente es un usuario Estándar que hace pedidos. Un repartidor es un usuario Estándar con el permiso **Repartidor** aprobado en Gestión de permisos: lo pide con `POST /api/solicitudes` y `{"permiso":"Repartidor"}`, y un Administrador lo aprueba con `POST /api/solicitudes/{id}/aprobar`. La máquina de estados del pedido está en `docs/maquina-de-estados.md` y en `src/Despacho.Negocio/Pedidos/MaquinaEstadosPedido.cs`. Todas las operaciones usan `Authorization: Bearer <token>`.
+Despacho de Entregas funciona como un servicio de mensajería: un cliente pide que un repartidor recoja un paquete en un punto y lo lleve a otro. Al crear el envío, el cliente elige la modalidad:
 
-Cuerpo para registrar un pedido:
+- **Enviar:** la recogida es donde está el cliente, y el contacto es la persona que recibe el paquete.
+- **Recibir:** la entrega es donde está el cliente, y el contacto es la persona que entrega el paquete.
+
+Un repartidor es un usuario Estándar con el permiso **Repartidor** aprobado en Gestión de permisos: lo pide con `POST /api/solicitudes` y `{"permiso":"Repartidor"}`, y un Administrador lo aprueba con `POST /api/solicitudes/{id}/aprobar`. El repartidor no ve las direcciones exactas hasta que acepta el envío.
+
+**Precio** (reglas en `src/Despacho.Negocio/Envios/TarifaEnvio.cs`): RD$ 100 incluye los primeros 2 km, más RD$ 20 por cada km extra; el tamaño multiplica (Pequeno ×1, Mediano ×1.25, Grande ×1.5). La distancia máxima es 30 km.
+
+La máquina de estados está en `docs/maquina-de-estados.md`. Todas las operaciones usan `Authorization: Bearer <token>`.
+
+Cuerpo para cotizar o crear un envío:
 
 ```
-{"tiendaId":1,"latitud":18.5,"longitud":-69.8,"referencia":"Casa azul","lineas":[{"producto":"Pan","cantidad":2,"precioUnitario":50}]}
+{"modalidad":"Enviar","origenLatitud":18.4861,"origenLongitud":-69.8571,"origenReferencia":"Casa azul","destinoLatitud":18.47,"destinoLongitud":-69.89,"destinoReferencia":"Oficina","contactoNombre":"Ana Perez","contactoTelefono":"809-555-1234","descripcionPaquete":"Documentos","tamano":"Mediano"}
 ```
+
+### Apartado del cliente
 
 | Operación | Quién | Endpoint | Cómo provocarla y resultado esperado |
 |---|---|---|---|
-| Registrar pedido | Estándar | `POST /api/pedidos` | Con el cuerpo de arriba devuelve su `id` y nace `Pendiente`. Sin líneas o con coordenadas fuera de rango: "Los datos del pedido no son válidos." |
-| Mis pedidos | Estándar | `GET /api/pedidos/mios` | Solo los pedidos de ese cliente |
-| Todos los pedidos | Administrador | `GET /api/pedidos` | Un Estándar recibe 403 |
-| Pedidos disponibles | Estándar con permiso Repartidor | `GET /api/pedidos/disponibles` | Sin el permiso aprobado: 403 "Necesitas el permiso Repartidor aprobado.". Con el permiso: los pendientes, sin la ubicación |
-| Aceptar pedido | Estándar con permiso Repartidor | `POST /api/pedidos/{id}/aceptar` | Sin el permiso aprobado se rechaza; después de que el Administrador lo aprueba: "Pedido aceptado." y queda `Asignado` |
-| Ver destino | Repartidor asignado | `GET /api/pedidos/{id}/destino` | Devuelve latitud, longitud y referencia. Cualquier otro usuario: "No puedes ver el destino de este pedido." |
-| Marcar en ruta | Repartidor asignado | `POST /api/pedidos/{id}/en-ruta` | Queda `EnRuta`. Otro repartidor: "No eres el repartidor de este pedido." |
-| Confirmar entrega | Repartidor asignado | `POST /api/pedidos/{id}/entregar` | Queda `Entregado` |
-| Cancelar | Cliente del pedido o Administrador | `POST /api/pedidos/{id}/cancelar` | Desde `Pendiente` o `Asignado` queda `Cancelado`. Otro cliente: "Solo el cliente del pedido o un Administrador pueden cancelarlo." Un pedido `EnRuta` o `Entregado`: "El pedido no puede cambiar a ese estado." |
+| Cotizar | Estándar | `POST /api/envios/cotizacion` | Devuelve la distancia y el costo sin crear nada. A más de 30 km: "La distancia no puede pasar de 30 km." |
+| Crear envío | Estándar | `POST /api/envios` | Devuelve su `id` y nace `Pendiente`. Con datos inválidos (mismo punto, sin contacto, modalidad o tamaño desconocidos): "Los datos del envío no son válidos." |
+| Mis envíos | Estándar | `GET /api/envios/mios` | Solo los envíos de ese cliente |
+| Todos los envíos | Administrador | `GET /api/envios` | Un Estándar recibe 403 |
+| Cancelar | Cliente del envío o Administrador | `POST /api/envios/{id}/cancelar` | Desde `Pendiente` o `Asignado` queda `Cancelado`. Otro cliente: "Solo el cliente del envío o un Administrador pueden cancelarlo." En ruta o entregado: "El envío no puede cambiar a ese estado." |
+
+### Apartado del repartidor
+
+| Operación | Endpoint | Cómo provocarla y resultado esperado |
+|---|---|---|
+| Envíos disponibles | `GET /api/repartidor/envios-disponibles` | Sin el permiso aprobado: 403 "Necesitas el permiso Repartidor aprobado.". Con el permiso: los pendientes con tamaño, distancia y pago, sin direcciones |
+| Aceptar | `POST /api/repartidor/envios/{id}/aceptar` | Sin el permiso aprobado se rechaza; después de la aprobación queda `Asignado`. Su propio envío: "No puedes aceptar tu propio envío." |
+| Ver ruta | `GET /api/repartidor/envios/{id}/ruta` | Los dos puntos exactos, el contacto y el paquete. Cualquier otro usuario: "No puedes ver la ruta de este envío." |
+| Ver direcciones | `GET /api/repartidor/envios/{id}/direcciones` | La dirección legible de la recogida y de la entrega (API externa, ver abajo) |
+| Recoger | `POST /api/repartidor/envios/{id}/recoger` | Queda `EnRuta`. Otro repartidor: "No eres el repartidor de este envío." |
+| Entregar | `POST /api/repartidor/envios/{id}/entregar` | Queda `Entregado`. Si todavía está `Asignado`: "El envío no puede cambiar a ese estado." |
 
 ## Defectos
 
@@ -289,6 +307,8 @@ Práctica 2, variante A (matrícula 2025-1963). Cada defecto está en un commit 
 | 6 | RF-GP-04 | `RechazarAsync_ConMotivo_RegistraMotivoYFecha` | Al rechazar se guarda el motivo escrito |
 
 ### Práctica 3
+
+Estos defectos se plantaron sobre la versión del negocio con pedidos (etiqueta `practica-3`); después el negocio pasó a envíos.
 
 Cada defecto está en un commit cuyo padre es `practica-3`, con la etiqueta `practica-3-defecto-N`. Sobre cada etiqueta, `dotnet test` falla en al menos la prueba indicada; sobre `practica-3` todas pasan.
 
