@@ -72,50 +72,47 @@ sabe que existen los pedidos (RD-03).
 
 | Entidad | Responsabilidad |
 |---|---|
-| `Tienda` | Comercio que despacha pedidos |
-| `Destinatario` | Persona que recibe el pedido |
-| `Pedido` | Solicitud de entrega. Contiene la máquina de estados |
-| `LineaPedido` | Cada artículo dentro de un pedido |
-| `Repartidor` | Persona asignada para entregar |
+| `Envio` | Traslado de un paquete de un punto a otro: modalidad, recogida, entrega, contacto, paquete, distancia, costo y estado |
+| Cliente | Usuario Estándar que crea el envío (`ClienteId`) |
+| Repartidor | Usuario Estándar con el permiso Repartidor aprobado (`RepartidorId`) |
 
 ### Relaciones
 
 ```mermaid
 erDiagram
-    TIENDA       ||--o{ PEDIDO       : despacha
-    DESTINATARIO ||--o{ PEDIDO       : recibe
-    REPARTIDOR   ||--o{ PEDIDO       : entrega
-    PEDIDO       ||--|{ LINEAPEDIDO  : contiene
+    CLIENTE    ||--o{ ENVIO : crea
+    REPARTIDOR ||--o{ ENVIO : entrega
 ```
 
-### Máquina de estados del Pedido
+### Máquina de estados del Envío
 
 ```mermaid
 stateDiagram-v2
     [*] --> Pendiente
-    Pendiente --> Asignado  : se asigna un repartidor
-    Asignado  --> EnRuta    : el repartidor recoge el pedido
-    EnRuta    --> Entregado : el destinatario recibe el pedido
-    Pendiente --> Cancelado : cancelación antes de asignar
-    Asignado  --> Cancelado : cancelación antes de salir
+    Pendiente --> Asignado  : un repartidor acepta el envío
+    Asignado  --> EnRuta    : el repartidor recoge el paquete
+    EnRuta    --> Entregado : el repartidor entrega el paquete
+    Pendiente --> Cancelado : el cliente cancela antes de que lo acepten
+    Asignado  --> Cancelado : el cliente cancela antes de la recogida
     Entregado --> [*]
     Cancelado --> [*]
 ```
 
 - **Estado inicial:** `Pendiente`
-- **Estados terminales:** `Entregado` y `Cancelado`. Ninguna transición
-  parte de ellos (RF-NEG-05)
-- **Transición prohibida explícita:** `Entregado → EnRuta`. El intento
-  se rechaza y el estado no cambia (RF-NEG-04)
+- **Estados terminales:** `Entregado` y `Cancelado`. Ninguna transición parte de ellos (RF-NEG-05)
+- **Transición prohibida explícita:** `Entregado → EnRuta`. El intento se rechaza y el estado no cambia (RF-NEG-04)
 - Las transiciones se resuelven en un único punto del código (RD-04)
 
 ### Funcionalidades
 
-1. Registrar un pedido con sus líneas
-2. Asignar un repartidor a un pedido pendiente
-3. Marcar un pedido como en ruta
-4. Confirmar la entrega
-5. Consultar el historial de pedidos por destinatario
+1. Cotizar un envío antes de crearlo
+2. Crear un envío, eligiendo si el cliente envía o recibe el paquete
+3. Consultar mis envíos
+4. Cancelar un envío
+5. Ver los envíos disponibles (repartidor)
+6. Aceptar un envío (repartidor con permiso aprobado)
+7. Ver la ruta y las direcciones de los dos puntos (repartidor asignado)
+8. Marcar el paquete como recogido y confirmar la entrega
 
 ---
 
@@ -124,12 +121,14 @@ stateDiagram-v2
 | Pieza | Semanas | Estado |
 |---|---|---|
 | Diseño de componentes | 2 | Hecho |
-| Control de acceso | 2–4 | En curso |
-| Gestión de permisos | 6–8 | Pendiente |
-| Manejador de documentos | 9 | Pendiente |
-| Notificaciones | 11–12 | Pendiente |
-| Reportes | 12 | Pendiente |
-| Auditoría | 14 | Pendiente |
+| Control de acceso | 2–4 | Hecho |
+| Gestión de permisos | 6–8 | Hecho |
+| Módulo de negocio (envíos) | 8 | Hecho |
+| Manejador de documentos y contenedor | 9 | Hecho |
+| Notificaciones | 10–11 | Pendiente |
+| Reportes | 10–12 | Pendiente |
+| Auditoría | 12–14 | Pendiente |
+| Interfaz web | 13 | Pendiente |
 
 ---
 
@@ -210,7 +209,7 @@ curl.exe -k https://localhost:7063/api/sesion/yo -H "Authorization: Bearer $toke
 
 ### Pendiente
 
-Swagger no carga todavía; las pruebas se hacen con curl.
+Con la Api en modo Development (por ejemplo, en Docker), Swagger está en http://localhost:8080/swagger.
 
 ## Gestión de permisos (Asignación 2)
 
