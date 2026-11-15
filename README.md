@@ -374,14 +374,14 @@ curl -X POST http://localhost:8080/api/documentos -H "Authorization: Bearer TOKE
 
 **API:** OpenCage Geocoding (geocodificación inversa): convierte una latitud y longitud en una dirección legible.
 
-**Operación que la usa:** `GET /api/pedidos/{id}/direccion`. Solo el repartidor asignado al pedido la puede usar, cuando el pedido está `Asignado` o `EnRuta`. Toma el punto de entrega guardado en el pedido y devuelve la dirección para que el repartidor sepa a dónde ir.
+**Operación que la usa:** `GET /api/repartidor/envios/{id}/direcciones`. Solo el repartidor asignado al envío la puede usar, cuando el envío está `Asignado` o `EnRuta`. Toma el punto de recogida y el punto de entrega guardados en el envío y devuelve la dirección legible de cada uno, para que el repartidor sepa a dónde ir.
 
 **Variable:** `OPENCAGE_API_KEY`, en el archivo `.env`, que no se versiona. La clave no está en el código, en el `Dockerfile`, en el `docker-compose.yml` ni en ningún commit. La clave gratuita se obtiene en https://opencagedata.com.
 
-**Ejemplo real de respuesta** (pedido con destino en latitud 18.4861 y longitud -69.8571):
+**Ejemplo real de respuesta** (recogida en latitud 18.4861 y longitud -69.8571; entrega en latitud 18.47 y longitud -69.89):
 
 ```
-{"latitud":18.4861,"longitud":-69.8571,"referencia":"Casa azul","direccion":"Calle 1A, Jardines de Alma Rosa, Santo Domingo Este, Santo Domingo, 03006, República Dominicana"}
+{"direccionOrigen":"Calle 1A, Jardines de Alma Rosa, Santo Domingo Este, Santo Domingo, 03006, República Dominicana","direccionDestino":"Calle Padre Billini 411, Ciudad Nueva, Santo Domingo de Guzmán, DN, 10208, República Dominicana"}
 ```
 
 **Sin clave o con la API caída:** la operación responde `503` con un mensaje claro ("El servicio de direcciones no está configurado." o "El servicio de direcciones no está disponible. Intenta más tarde.") y el resto del proyecto sigue funcionando. Con la clave de ejemplo del `.env.example`, la respuesta es la segunda.
