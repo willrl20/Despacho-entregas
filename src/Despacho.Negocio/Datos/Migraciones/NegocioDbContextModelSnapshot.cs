@@ -22,7 +22,7 @@ namespace Despacho.Negocio.Datos.Migraciones
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("Despacho.Negocio.Pedidos.LineaPedido", b =>
+            modelBuilder.Entity("Despacho.Negocio.Envios.Envio", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -30,41 +30,30 @@ namespace Despacho.Negocio.Datos.Migraciones
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("Cantidad")
+                    b.Property<int>("ClienteId")
                         .HasColumnType("int");
 
-                    b.Property<int>("PedidoId")
-                        .HasColumnType("int");
-
-                    b.Property<decimal>("PrecioUnitario")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("decimal(10,2)");
-
-                    b.Property<string>("Producto")
+                    b.Property<string>("ContactoNombre")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
-                    b.HasKey("Id");
+                    b.Property<string>("ContactoTelefono")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
-                    b.HasIndex("PedidoId");
-
-                    b.ToTable("LineasPedido");
-                });
-
-            modelBuilder.Entity("Despacho.Negocio.Pedidos.Pedido", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    b.Property<decimal>("Costo")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
 
                     b.Property<DateTime>("CreadoEnUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("DestinatarioId")
-                        .HasColumnType("int");
+                    b.Property<string>("DescripcionPaquete")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<double>("DestinoLatitud")
                         .HasColumnType("float");
@@ -76,40 +65,46 @@ namespace Despacho.Negocio.Datos.Migraciones
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
+                    b.Property<double>("DistanciaKm")
+                        .HasColumnType("float");
+
                     b.Property<string>("Estado")
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
+                    b.Property<string>("Modalidad")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<double>("OrigenLatitud")
+                        .HasColumnType("float");
+
+                    b.Property<double>("OrigenLongitud")
+                        .HasColumnType("float");
+
+                    b.Property<string>("OrigenReferencia")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
                     b.Property<int?>("RepartidorId")
                         .HasColumnType("int");
 
-                    b.Property<int>("TiendaId")
-                        .HasColumnType("int");
+                    b.Property<string>("Tamano")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("DestinatarioId");
+                    b.HasIndex("ClienteId");
+
+                    b.HasIndex("Estado");
 
                     b.HasIndex("RepartidorId");
 
-                    b.HasIndex("TiendaId");
-
-                    b.ToTable("Pedidos");
-                });
-
-            modelBuilder.Entity("Despacho.Negocio.Pedidos.LineaPedido", b =>
-                {
-                    b.HasOne("Despacho.Negocio.Pedidos.Pedido", null)
-                        .WithMany("Lineas")
-                        .HasForeignKey("PedidoId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("Despacho.Negocio.Pedidos.Pedido", b =>
-                {
-                    b.Navigation("Lineas");
+                    b.ToTable("Envios", (string)null);
                 });
 #pragma warning restore 612, 618
         }
