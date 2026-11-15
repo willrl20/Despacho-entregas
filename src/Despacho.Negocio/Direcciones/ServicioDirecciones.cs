@@ -1,6 +1,6 @@
 using Despacho.Core.Comun;
 using Despacho.Negocio.Datos;
-using Despacho.Negocio.Pedidos;
+using Despacho.Negocio.Envios;
 using Microsoft.EntityFrameworkCore;
 
 namespace Despacho.Negocio.Direcciones;
@@ -10,8 +10,8 @@ public sealed class ServicioDirecciones : IServicioDirecciones
     private readonly NegocioDbContext _db;
     private readonly IGeocodificador _geocodificador;
 
-    public const string MensajeNoExiste = "El pedido no existe.";
-    public const string MensajeSinDestino = "No puedes ver el destino de este pedido.";
+    public const string MensajeNoExiste = "El envío no existe.";
+    public const string MensajeSinRuta = "No puedes ver la ruta de este envío.";
 
     public ServicioDirecciones(NegocioDbContext db, IGeocodificador geocodificador)
     {
@@ -19,20 +19,24 @@ public sealed class ServicioDirecciones : IServicioDirecciones
         _geocodificador = geocodificador;
     }
 
-    public async Task<Resultado<DireccionDestino>> VerDireccionDestinoAsync(int repartidorId, int pedidoId)
+    public async Task<Resultado<DireccionesEnvio>> VerDireccionesAsync(int repartidorId, int envioId)
     {
-        var pedido = await _db.Pedidos.FirstOrDefaultAsync(p => p.Id == pedidoId);
-        if (pedido == null)
-            return Resultado<DireccionDestino>.Falla(MensajeNoExiste);
+        var envio = await _db.Envios.FirstOrDefaultAsync(e => e.Id == envioId);
+        if (envio == null)
+            return Resultado<DireccionesEnvio>.Falla(MensajeNoExiste);
 
-        if (pedido.RepartidorId != repartidorId
-            || (pedido.Estado != EstadoPedido.Asignado && pedido.Estado != EstadoPedido.EnRuta))
-            return Resultado<DireccionDestino>.Falla(MensajeSinDestino);
+        if (envio.RepartidorId != repartidorId
+            || (envio.Estado != EstadoEnvio.Asignado && envio.Estado != EstadoEnvio.EnRuta))
+            return Resultado<DireccionesEnvio>.Falla(MensajeSinRuta);
 
-        var direccion = await _geocodificador.ObtenerDireccionAsync(pedido.DestinoLatitud, pedido.DestinoLongitud);
-        if (!direccion.Exito)
-            return Resultado<DireccionDestino>.Falla(direccion.Error!);
+        var origen = await _geocodificador.ObtenerDireccionAsync(envio.OrigenLatitud, envio.OrigenLongitud);
+        if (!origen.Exito)
+            return Resultado<DireccionesEnvio>.Falla(origen.Error!);
 
-        return Resultado<DireccionDestino>.Ok(new DireccionDestino(pedido.DestinoLatitud, pedido.DestinoLongitud, pedido.DestinoReferencia, direccion.Valor!));
+        var destino = await _geocodificador.ObtenerDireccionAsync(envio.DestinoLatitud, envio.DestinoLongitud);
+        if (!destino.Exito)
+            return Resultado<DireccionesEnvio>.Falla(destino.Error!);
+
+        return Resultado<DireccionesEnvio>.Ok(new DireccionesEnvio(origen.Valor!, destino.Valor!));
     }
 }
