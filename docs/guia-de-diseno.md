@@ -65,6 +65,7 @@ Reglas:
 ## Movimiento
 
 - Un solo momento con animación: la caja del logo "arranca" al confirmar un envío.
+- El repartidor de las pantallas de entrada también se mueve (ruedas, calle y líneas de velocidad) y se detiene con `prefers-reduced-motion`.
 - Lo demás, sin animaciones decorativas. Se respeta `prefers-reduced-motion`.
 
 ## Cómo habla DashGo
