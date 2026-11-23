@@ -63,5 +63,5 @@ var procesador = new ProcesadorCola(
     new RelojSistema());
 
 var resumen = await procesador.ProcesarPendientesAsync();
-Console.WriteLine($"Correos enviados: {resumen.Enviados}. Fallidos: {resumen.Fallidos}.");
+Console.WriteLine($"Correos enviados: {resumen.Enviados}. Con reintento pendiente: {resumen.Reintentos}. Fallidos definitivos: {resumen.Fallidos}.");
 return 0;

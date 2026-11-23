@@ -1,5 +1,6 @@
 using Despacho.Core.Comun;
 using Despacho.Core.Datos;
+using Despacho.Core.Notificaciones;
 using Despacho.Core.Usuarios;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,13 +17,19 @@ public sealed class ServicioPermisos : IServicioPermisos
     private const string MensajeSinMotivo = "Escribe el motivo del rechazo.";
     private const string MensajeMotivoLargo = "El motivo no puede tener más de 500 caracteres.";
 
+    public const string TituloSolicitudCreada = "Nueva solicitud de permiso";
+    public const string TituloSolicitudAprobada = "Solicitud de permiso aprobada";
+    public const string TituloSolicitudRechazada = "Solicitud de permiso rechazada";
+
     private readonly CoreDbContext _db;
     private readonly IReloj _reloj;
+    private readonly IServicioNotificaciones _notificaciones;
 
-    public ServicioPermisos(CoreDbContext db, IReloj reloj)
+    public ServicioPermisos(CoreDbContext db, IReloj reloj, IServicioNotificaciones notificaciones)
     {
         _db = db;
         _reloj = reloj;
+        _notificaciones = notificaciones;
     }
 
     public async Task<Resultado<int>> CrearAsync(int solicitanteId, string? permiso)
@@ -52,6 +59,10 @@ public sealed class ServicioPermisos : IServicioPermisos
 
         _db.SolicitudesPermiso.Add(solicitud);
         await _db.SaveChangesAsync();
+
+        await _notificaciones.NotificarAdministradoresAsync(
+            TituloSolicitudCreada,
+            $"El usuario {usuario.Correo} pidió el permiso {permisoPedido}.");
 
         return Resultado<int>.Ok(solicitud.Id);
     }
@@ -94,6 +105,12 @@ public sealed class ServicioPermisos : IServicioPermisos
         solicitud.MarcarAplicada();
 
         await _db.SaveChangesAsync();
+
+        await _notificaciones.NotificarAsync(
+            solicitud.SolicitanteId,
+            TituloSolicitudAprobada,
+            $"Tu solicitud del permiso {solicitud.PermisoSolicitado} fue aprobada.");
+
         return Resultado.Ok();
     }
 
@@ -116,6 +133,12 @@ public sealed class ServicioPermisos : IServicioPermisos
             return Resultado.Falla(MensajeNoPendiente);
 
         await _db.SaveChangesAsync();
+
+        await _notificaciones.NotificarAsync(
+            solicitud.SolicitanteId,
+            TituloSolicitudRechazada,
+            $"Tu solicitud del permiso {solicitud.PermisoSolicitado} fue rechazada. Motivo: {solicitud.MotivoRechazo}");
+
         return Resultado.Ok();
     }
 

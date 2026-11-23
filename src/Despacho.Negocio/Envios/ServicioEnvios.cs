@@ -1,4 +1,5 @@
 using Despacho.Core.Comun;
+using Despacho.Core.Notificaciones;
 using Despacho.Core.Permisos;
 using Despacho.Negocio.Datos;
 using Microsoft.EntityFrameworkCore;
@@ -24,11 +25,17 @@ public sealed class ServicioEnvios : IServicioEnvios
 
     private sealed record Validado(ModalidadEnvio Modalidad, TamanoPaquete Tamano, double DistanciaKm, decimal Costo);
 
-    public ServicioEnvios(NegocioDbContext db, IServicioPermisos permisos, IReloj reloj)
+    public const string TituloEnvioAceptado = "Tu envío fue aceptado";
+    public const string TituloEnvioEntregado = "Tu envío fue entregado";
+
+    private readonly IServicioNotificaciones _notificaciones;
+
+    public ServicioEnvios(NegocioDbContext db, IServicioPermisos permisos, IReloj reloj, IServicioNotificaciones notificaciones)
     {
         _db = db;
         _permisos = permisos;
         _reloj = reloj;
+        _notificaciones = notificaciones;
     }
 
     private static Resultado<Validado> Validar(DatosEnvio? datos)
@@ -207,6 +214,11 @@ public sealed class ServicioEnvios : IServicioEnvios
         envio.RepartidorId = repartidorId;
         await _db.SaveChangesAsync();
 
+        await _notificaciones.NotificarAsync(
+            envio.ClienteId,
+            TituloEnvioAceptado,
+            $"Tu envío #{envio.Id} fue aceptado por un repartidor.");
+
         return Resultado.Ok();
     }
 
@@ -254,6 +266,14 @@ public sealed class ServicioEnvios : IServicioEnvios
             return Resultado.Falla(MensajeTransicionInvalida);
 
         await _db.SaveChangesAsync();
+
+        if (nuevo == EstadoEnvio.Entregado)
+        {
+            await _notificaciones.NotificarAsync(
+                envio.ClienteId,
+                TituloEnvioEntregado,
+                $"Tu envío #{envio.Id} fue entregado.");
+        }
 
         return Resultado.Ok();
     }

@@ -125,8 +125,8 @@ stateDiagram-v2
 | Gestión de permisos | 6–8 | Hecho |
 | Módulo de negocio (envíos) | 8 | Hecho |
 | Manejador de documentos y contenedor | 9 | Hecho |
-| Notificaciones | 10–11 | Pendiente |
-| Reportes | 10–12 | Pendiente |
+| Notificaciones | 10–11 | Hecho |
+| Reportes | 10–12 | Hecho |
 | Auditoría | 12–14 | Pendiente |
 | Interfaz web | 13 | Pendiente |
 
@@ -385,3 +385,46 @@ curl -X POST http://localhost:8080/api/documentos -H "Authorization: Bearer TOKE
 ```
 
 **Sin clave o con la API caída:** la operación responde `503` con un mensaje claro ("El servicio de direcciones no está configurado." o "El servicio de direcciones no está disponible. Intenta más tarde.") y el resto del proyecto sigue funcionando. Con la clave de ejemplo del `.env.example`, la respuesta es la segunda.
+
+## Notificaciones
+
+Cada notificación llega por dos canales: dentro del sistema y por correo. El correo se encola y lo envía el servicio `enviador` (ver más abajo). Todas las operaciones usan `Authorization: Bearer <token>`.
+
+| Evento | Quién recibe | Cómo provocarlo |
+|---|---|---|
+| Se crea una solicitud de permiso | Todos los Administradores activos | Un Estándar llama `POST /api/solicitudes` con `{"permiso":"Repartidor"}` |
+| Se aprueba una solicitud | El solicitante | Un Administrador llama `POST /api/solicitudes/{id}/aprobar` |
+| Se rechaza una solicitud | El solicitante, con el motivo | Un Administrador llama `POST /api/solicitudes/{id}/rechazar` con `{"motivo":"..."}` |
+| Un repartidor acepta un envío (evento del negocio) | El cliente del envío | Con el permiso Repartidor aprobado, `POST /api/repartidor/envios/{id}/aceptar` |
+| Un repartidor entrega un envío (evento del negocio) | El cliente del envío | `POST /api/repartidor/envios/{id}/recoger` y luego `POST /api/repartidor/envios/{id}/entregar` |
+
+| Operación | Endpoint | Resultado esperado |
+|---|---|---|
+| Mis notificaciones | `GET /api/notificaciones` | Solo las propias, de la más nueva a la más vieja, cada una con `leida` |
+| Solo las no leídas | `GET /api/notificaciones?soloNoLeidas=true` | Solo las propias sin leer |
+| Marcar como leída | `POST /api/notificaciones/{id}/leida` | La propia queda leída. La de otro usuario responde 404 |
+| Apagar o encender el correo | `PUT /api/notificaciones/preferencias` con `{"correo":false}` o `{"correo":true}` | Con el correo apagado, la notificación interna sigue llegando y no se encola ningún correo |
+
+### Cola de correos
+
+Los correos se guardan en la cola dentro de la misma operación y nunca se envían ahí: la operación termina bien aunque el servidor de correo no responda.
+
+- **El procesador** es el servicio `enviador` de `docker-compose.yml`, que corre solo cada 30 segundos. Para correrlo una vez a mano: `docker compose exec enviador dotnet /app/enviador/Despacho.EnviadorCorreos.dll`
+- **Máximo de intentos: 3.** Cada fallo suma un intento y guarda el último error. Al tercer fallo el correo queda `Fallido` y no se vuelve a intentar. Ningún correo se borra. El valor está en `CorreoEnCola.MaximoIntentos`.
+- Un correo `Enviado` no se vuelve a enviar: correr el procesador dos veces seguidas no duplica nada.
+- **Consultar la cola** (solo Administrador): `GET /api/correos`, o filtrando por estado con `GET /api/correos?estado=Pendiente`, `Enviado` o `Fallido`. Muestra destinatario, asunto, estado, intentos, fechas y último error. Un Estándar recibe 403.
+- **Provocar un fallo de envío:** en `.env` cambia `SMTP_HOST` por `no-existe.invalid`, ejecuta `docker compose up -d --force-recreate enviador` y provoca cualquier evento. En la cola verás el correo sumar intentos hasta quedar `Fallido` con su último error. Para volver a la normalidad, restaura `SMTP_HOST` y repite el comando.
+- Las credenciales del servidor de correo (`SMTP_HOST`, `SMTP_PUERTO`, `SMTP_USUARIO`, `SMTP_CONTRASENA`, `SMTP_REMITENTE`) se leen de variables de entorno, desde el `.env`, que no se versiona.
+
+## Reportes
+
+Los dos reportes devuelven valores agrupados (no el listado de registros), calculados en la base de datos. Se filtran por fechas con `desde` y `hasta` en formato `AAAA-MM-DD`, en UTC, con el día `hasta` incluido completo. Si `desde` es posterior a `hasta` o una fecha no existe, responden 400. Un rango sin datos devuelve una lista vacía.
+
+| Reporte | Endpoint | Qué devuelve |
+|---|---|---|
+| Solicitudes de permiso por estado (Core) | `GET /api/reportes/solicitudes?desde=2026-11-01&hasta=2026-11-30` | Una fila por estado con su cantidad |
+| Lo que hizo cada repartidor (negocio) | `GET /api/reportes/repartidores?desde=2026-11-01&hasta=2026-11-30` | Una fila por repartidor con los envíos entregados, los kilómetros y lo que generó, de mayor a menor |
+
+**Pregunta que responde el reporte del negocio:** ¿cuántos envíos entregó cada repartidor, cuántos kilómetros recorrió y cuánto dinero generó en un período?
+
+**Según el rol:** el Administrador ve los datos de todos. Un Estándar ve solo lo suyo: en el de solicitudes, las que él creó; en el de repartidores, solo su propia fila.

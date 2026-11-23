@@ -1,4 +1,6 @@
+using Despacho.Core.Correos;
 using Despacho.Core.Datos;
+using Despacho.Core.Notificaciones;
 using Despacho.Core.Permisos;
 using Despacho.Core.Tests.Dobles;
 using Despacho.Core.Usuarios;
@@ -27,7 +29,7 @@ public class ServicioPermisosTests
         db.SolicitudesPermiso.Add(solicitud);
         await db.SaveChangesAsync();
 
-        var servicio = new ServicioPermisos(db, reloj);
+        var servicio = new ServicioPermisos(db, reloj, new ServicioNotificaciones(db, new ColaCorreos(db, reloj), reloj));
 
         // Act
         var resultado = await servicio.AprobarAsync(aprobador.Id, solicitud.Id);
@@ -58,7 +60,7 @@ public class ServicioPermisosTests
         db.SolicitudesPermiso.Add(solicitud);
         await db.SaveChangesAsync();
 
-        var servicio = new ServicioPermisos(db, reloj);
+        var servicio = new ServicioPermisos(db, reloj, new ServicioNotificaciones(db, new ColaCorreos(db, reloj), reloj));
 
         // Act
         await servicio.AprobarAsync(aprobador.Id, solicitud.Id);
@@ -87,7 +89,7 @@ public class ServicioPermisosTests
         db.SolicitudesPermiso.Add(solicitud);
         await db.SaveChangesAsync();
 
-        var servicio = new ServicioPermisos(db, reloj);
+        var servicio = new ServicioPermisos(db, reloj, new ServicioNotificaciones(db, new ColaCorreos(db, reloj), reloj));
         await servicio.AprobarAsync(aprobador1.Id, solicitud.Id);
 
         // Act
@@ -117,7 +119,7 @@ public class ServicioPermisosTests
         db.SolicitudesPermiso.Add(solicitud);
         await db.SaveChangesAsync();
 
-        var servicio = new ServicioPermisos(db, reloj);
+        var servicio = new ServicioPermisos(db, reloj, new ServicioNotificaciones(db, new ColaCorreos(db, reloj), reloj));
 
         // Act
         var resultado = await servicio.AprobarAsync(solicitante.Id, solicitud.Id);
@@ -147,7 +149,7 @@ public class ServicioPermisosTests
         db.SolicitudesPermiso.Add(solicitud);
         await db.SaveChangesAsync();
 
-        var servicio = new ServicioPermisos(db, reloj);
+        var servicio = new ServicioPermisos(db, reloj, new ServicioNotificaciones(db, new ColaCorreos(db, reloj), reloj));
         var motivo = "No cumple los requisitos mínimos";
 
         // Act
@@ -180,7 +182,7 @@ public class ServicioPermisosTests
         db.SolicitudesPermiso.Add(solicitud);
         await db.SaveChangesAsync();
 
-        var servicio = new ServicioPermisos(db, reloj);
+        var servicio = new ServicioPermisos(db, reloj, new ServicioNotificaciones(db, new ColaCorreos(db, reloj), reloj));
 
         // Act
         var resultado = await servicio.RechazarAsync(aprobador.Id, solicitud.Id, null);
@@ -206,7 +208,7 @@ public class ServicioPermisosTests
         db.Usuarios.Add(usuario);
         await db.SaveChangesAsync();
 
-        var servicio = new ServicioPermisos(db, reloj);
+        var servicio = new ServicioPermisos(db, reloj, new ServicioNotificaciones(db, new ColaCorreos(db, reloj), reloj));
 
         // Act
         var resultado = await servicio.CrearAsync(usuario.Id, "Administrador");
@@ -238,7 +240,7 @@ public class ServicioPermisosTests
         db.SolicitudesPermiso.AddRange(solicitud1, solicitud2);
         await db.SaveChangesAsync();
 
-        var servicio = new ServicioPermisos(db, reloj);
+        var servicio = new ServicioPermisos(db, reloj, new ServicioNotificaciones(db, new ColaCorreos(db, reloj), reloj));
 
         // Act
         var resultado = await servicio.ListarDeUsuarioAsync(usuario1.Id);
@@ -269,7 +271,7 @@ public class ServicioPermisosTests
         db.SolicitudesPermiso.Add(solicitud);
         await db.SaveChangesAsync();
 
-        var servicio = new ServicioPermisos(db, reloj);
+        var servicio = new ServicioPermisos(db, reloj, new ServicioNotificaciones(db, new ColaCorreos(db, reloj), reloj));
 
         // Act
         var resultado = await servicio.RechazarAsync(aprobador.Id, solicitud.Id, motivo);
@@ -298,7 +300,7 @@ public class ServicioPermisosTests
         db.SolicitudesPermiso.Add(solicitud);
         await db.SaveChangesAsync();
 
-        var servicio = new ServicioPermisos(db, reloj);
+        var servicio = new ServicioPermisos(db, reloj, new ServicioNotificaciones(db, new ColaCorreos(db, reloj), reloj));
 
         // Act
         var resultado = await servicio.RechazarAsync(solicitante.Id, solicitud.Id, "motivo");

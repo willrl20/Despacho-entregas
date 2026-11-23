@@ -79,15 +79,29 @@ namespace Despacho.Core.Datos.Migraciones
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
-                    b.Property<bool>("Enviado")
-                        .HasColumnType("bit");
-
                     b.Property<DateTime?>("EnviadoEnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasDefaultValue("Pendiente");
+
+                    b.Property<int>("Intentos")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UltimoError")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime?>("UltimoIntentoEnUtc")
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Enviado");
+                    b.HasIndex("Estado");
 
                     b.ToTable("CorreosEnCola");
                 });
@@ -135,6 +149,62 @@ namespace Despacho.Core.Datos.Migraciones
                     b.HasIndex("PropietarioId");
 
                     b.ToTable("Documentos");
+                });
+
+            modelBuilder.Entity("Despacho.Core.Notificaciones.Notificacion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreadaEnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("DestinatarioId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("Leida")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Mensaje")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("Titulo")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DestinatarioId", "Leida");
+
+                    b.ToTable("Notificaciones");
+                });
+
+            modelBuilder.Entity("Despacho.Core.Notificaciones.PreferenciaNotificacion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("CorreoActivo")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("UsuarioId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UsuarioId")
+                        .IsUnique();
+
+                    b.ToTable("PreferenciasNotificacion");
                 });
 
             modelBuilder.Entity("Despacho.Core.Permisos.PermisoConcedido", b =>
