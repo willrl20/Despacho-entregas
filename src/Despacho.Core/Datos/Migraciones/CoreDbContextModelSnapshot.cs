@@ -79,15 +79,29 @@ namespace Despacho.Core.Datos.Migraciones
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
-                    b.Property<bool>("Enviado")
-                        .HasColumnType("bit");
-
                     b.Property<DateTime?>("EnviadoEnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasDefaultValue("Pendiente");
+
+                    b.Property<int>("Intentos")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UltimoError")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime?>("UltimoIntentoEnUtc")
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Enviado");
+                    b.HasIndex("Estado");
 
                     b.ToTable("CorreosEnCola");
                 });

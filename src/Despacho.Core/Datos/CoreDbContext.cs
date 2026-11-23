@@ -72,7 +72,15 @@ public class CoreDbContext : DbContext
             entity.Property(c => c.Cuerpo)
                 .IsRequired();
 
-            entity.HasIndex(c => c.Enviado);
+            entity.Property(c => c.Estado)
+                .HasConversion<string>()
+                .HasMaxLength(20)
+                .HasDefaultValue(EstadoCorreo.Pendiente);
+
+            entity.Property(c => c.UltimoError)
+                .HasMaxLength(500);
+
+            entity.HasIndex(c => c.Estado);
         });
 
         modelBuilder.Entity<Sesion>(entity =>

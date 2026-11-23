@@ -32,6 +32,7 @@ builder.Services.AddSingleton<IAlmacenArchivos>(new AlmacenArchivosLocal(rutaDoc
 builder.Services.AddSingleton(new OpcionesOpenCage { ClaveApi = builder.Configuration["OPENCAGE_API_KEY"] });
 builder.Services.AddHttpClient<IGeocodificador, GeocodificadorOpenCage>(cliente => cliente.Timeout = TimeSpan.FromSeconds(10));
 builder.Services.AddScoped<IColaCorreos, ColaCorreos>();
+builder.Services.AddScoped<IServicioCorreos, ServicioCorreos>();
 builder.Services.AddScoped<IServicioRegistro, ServicioRegistro>();
 builder.Services.AddScoped<IServicioSesion, ServicioSesion>();
 builder.Services.AddScoped<IServicioAdministracion, ServicioAdministracion>();
@@ -95,4 +96,5 @@ app.MapEnvios();
 app.MapRepartidor();
 app.MapDocumentos();
 app.MapNotificaciones();
+app.MapCorreos();
 app.Run();
