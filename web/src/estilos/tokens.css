@@ -1,0 +1,39 @@
+:root {
+  color-scheme: dark;
+
+  --color-fondo: #0d3b40;
+  --color-superficie: #12505a;
+  --color-superficie-alta: #176470;
+  --color-principal: #ff9f1c;
+  --color-principal-texto: #0d3b40;
+  --color-secundario: #7fe0c9;
+  --color-texto: #eaf6f6;
+  --color-texto-suave: #9cc5c7;
+  --color-borde: #1e6670;
+  --color-exito: #5bd68a;
+  --color-error: #ff7a7a;
+
+  --letra-texto: 'Barlow', system-ui, sans-serif;
+  --letra-numeros: 'Barlow Condensed', 'Barlow', system-ui, sans-serif;
+
+  --texto-14: 0.875rem;
+  --texto-16: 1rem;
+  --texto-20: 1.25rem;
+  --texto-25: 1.5625rem;
+  --texto-31: 1.9375rem;
+  --interlineado-texto: 1.5;
+
+  --espacio-4: 4px;
+  --espacio-8: 8px;
+  --espacio-12: 12px;
+  --espacio-16: 16px;
+  --espacio-24: 24px;
+  --espacio-32: 32px;
+
+  --esquina-boton: 10px;
+  --esquina-campo: 10px;
+  --esquina-tarjeta: 14px;
+  --esquina-pastilla: 9999px;
+
+  --zona-tactil: 44px;
+}

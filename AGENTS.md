@@ -48,3 +48,11 @@ No toques las migraciones que ya existen; crea migraciones nuevas.
 Trabaja solo dentro de este repositorio. No accedas a carpetas fuera de él.
 No hagas commit, push, tag ni cambies de rama. No instales paquetes ni ejecutes comandos salvo que se te pida.
 Al terminar, lista los archivos que creaste, modificaste y eliminaste.
+## Interfaz web
+
+- Está en web/ (React + Vite + TypeScript).
+- Se corre con "cd web" y "npm run dev" (http://localhost:5173), con la Api corriendo en http://localhost:8080.
+- Sigue docs/guia-de-diseno.md y la skill modern-web-guidance.
+- Sin librerías de componentes ni Tailwind.
+- Todo texto de la interfaz va en español.
+- Nunca guardar contraseñas ni datos sensibles en localStorage.
