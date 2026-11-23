@@ -1,4 +1,6 @@
+using Despacho.Core.Correos;
 using Despacho.Core.Datos;
+using Despacho.Core.Notificaciones;
 using Despacho.Core.Permisos;
 using Despacho.Negocio.Datos;
 using Despacho.Negocio.Envios;
@@ -30,8 +32,8 @@ public class ServicioEnviosTests
         var negocioDb = new NegocioDbContext(new DbContextOptionsBuilder<NegocioDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
         var coreDb = new CoreDbContext(new DbContextOptionsBuilder<CoreDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
         var reloj = new RelojFijo();
-        var servicioPermisos = new ServicioPermisos(coreDb, reloj);
-        var servicio = new ServicioEnvios(negocioDb, servicioPermisos, reloj);
+        var servicioPermisos = new ServicioPermisos(coreDb, reloj, new ServicioNotificaciones(coreDb, new ColaCorreos(coreDb, reloj), reloj));
+        var servicio = new ServicioEnvios(negocioDb, servicioPermisos, reloj, new ServicioNotificaciones(coreDb, new ColaCorreos(coreDb, reloj), reloj));
 
         // Act
         var resultado = await servicio.CrearAsync(1, DatosValidos());
@@ -53,8 +55,8 @@ public class ServicioEnviosTests
         var negocioDb = new NegocioDbContext(new DbContextOptionsBuilder<NegocioDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
         var coreDb = new CoreDbContext(new DbContextOptionsBuilder<CoreDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
         var reloj = new RelojFijo();
-        var servicioPermisos = new ServicioPermisos(coreDb, reloj);
-        var servicio = new ServicioEnvios(negocioDb, servicioPermisos, reloj);
+        var servicioPermisos = new ServicioPermisos(coreDb, reloj, new ServicioNotificaciones(coreDb, new ColaCorreos(coreDb, reloj), reloj));
+        var servicio = new ServicioEnvios(negocioDb, servicioPermisos, reloj, new ServicioNotificaciones(coreDb, new ColaCorreos(coreDb, reloj), reloj));
 
         var datos = DatosValidos() with { Modalidad = "Recibir" };
 
@@ -75,8 +77,8 @@ public class ServicioEnviosTests
         var negocioDb = new NegocioDbContext(new DbContextOptionsBuilder<NegocioDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
         var coreDb = new CoreDbContext(new DbContextOptionsBuilder<CoreDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
         var reloj = new RelojFijo();
-        var servicioPermisos = new ServicioPermisos(coreDb, reloj);
-        var servicio = new ServicioEnvios(negocioDb, servicioPermisos, reloj);
+        var servicioPermisos = new ServicioPermisos(coreDb, reloj, new ServicioNotificaciones(coreDb, new ColaCorreos(coreDb, reloj), reloj));
+        var servicio = new ServicioEnvios(negocioDb, servicioPermisos, reloj, new ServicioNotificaciones(coreDb, new ColaCorreos(coreDb, reloj), reloj));
 
         var original = DatosValidos();
         var datos = original with { DestinoLatitud = original.OrigenLatitud, DestinoLongitud = original.OrigenLongitud };
@@ -97,8 +99,8 @@ public class ServicioEnviosTests
         var negocioDb = new NegocioDbContext(new DbContextOptionsBuilder<NegocioDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
         var coreDb = new CoreDbContext(new DbContextOptionsBuilder<CoreDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
         var reloj = new RelojFijo();
-        var servicioPermisos = new ServicioPermisos(coreDb, reloj);
-        var servicio = new ServicioEnvios(negocioDb, servicioPermisos, reloj);
+        var servicioPermisos = new ServicioPermisos(coreDb, reloj, new ServicioNotificaciones(coreDb, new ColaCorreos(coreDb, reloj), reloj));
+        var servicio = new ServicioEnvios(negocioDb, servicioPermisos, reloj, new ServicioNotificaciones(coreDb, new ColaCorreos(coreDb, reloj), reloj));
 
         var datos = DatosValidos() with { ContactoNombre = "" };
 
@@ -118,8 +120,8 @@ public class ServicioEnviosTests
         var negocioDb = new NegocioDbContext(new DbContextOptionsBuilder<NegocioDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
         var coreDb = new CoreDbContext(new DbContextOptionsBuilder<CoreDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
         var reloj = new RelojFijo();
-        var servicioPermisos = new ServicioPermisos(coreDb, reloj);
-        var servicio = new ServicioEnvios(negocioDb, servicioPermisos, reloj);
+        var servicioPermisos = new ServicioPermisos(coreDb, reloj, new ServicioNotificaciones(coreDb, new ColaCorreos(coreDb, reloj), reloj));
+        var servicio = new ServicioEnvios(negocioDb, servicioPermisos, reloj, new ServicioNotificaciones(coreDb, new ColaCorreos(coreDb, reloj), reloj));
 
         var datos = DatosValidos() with { Modalidad = "Volar" };
 
@@ -139,8 +141,8 @@ public class ServicioEnviosTests
         var negocioDb = new NegocioDbContext(new DbContextOptionsBuilder<NegocioDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
         var coreDb = new CoreDbContext(new DbContextOptionsBuilder<CoreDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
         var reloj = new RelojFijo();
-        var servicioPermisos = new ServicioPermisos(coreDb, reloj);
-        var servicio = new ServicioEnvios(negocioDb, servicioPermisos, reloj);
+        var servicioPermisos = new ServicioPermisos(coreDb, reloj, new ServicioNotificaciones(coreDb, new ColaCorreos(coreDb, reloj), reloj));
+        var servicio = new ServicioEnvios(negocioDb, servicioPermisos, reloj, new ServicioNotificaciones(coreDb, new ColaCorreos(coreDb, reloj), reloj));
 
         var datos = DatosValidos() with { DestinoLatitud = 19.4500, DestinoLongitud = -70.7000 };
 
@@ -160,8 +162,8 @@ public class ServicioEnviosTests
         var negocioDb = new NegocioDbContext(new DbContextOptionsBuilder<NegocioDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
         var coreDb = new CoreDbContext(new DbContextOptionsBuilder<CoreDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
         var reloj = new RelojFijo();
-        var servicioPermisos = new ServicioPermisos(coreDb, reloj);
-        var servicio = new ServicioEnvios(negocioDb, servicioPermisos, reloj);
+        var servicioPermisos = new ServicioPermisos(coreDb, reloj, new ServicioNotificaciones(coreDb, new ColaCorreos(coreDb, reloj), reloj));
+        var servicio = new ServicioEnvios(negocioDb, servicioPermisos, reloj, new ServicioNotificaciones(coreDb, new ColaCorreos(coreDb, reloj), reloj));
 
         var creado = await servicio.CrearAsync(5, DatosValidos());
 
@@ -182,8 +184,8 @@ public class ServicioEnviosTests
         var negocioDb = new NegocioDbContext(new DbContextOptionsBuilder<NegocioDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
         var coreDb = new CoreDbContext(new DbContextOptionsBuilder<CoreDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
         var reloj = new RelojFijo();
-        var servicioPermisos = new ServicioPermisos(coreDb, reloj);
-        var servicio = new ServicioEnvios(negocioDb, servicioPermisos, reloj);
+        var servicioPermisos = new ServicioPermisos(coreDb, reloj, new ServicioNotificaciones(coreDb, new ColaCorreos(coreDb, reloj), reloj));
+        var servicio = new ServicioEnvios(negocioDb, servicioPermisos, reloj, new ServicioNotificaciones(coreDb, new ColaCorreos(coreDb, reloj), reloj));
 
         var creado = await servicio.CrearAsync(5, DatosValidos());
 
@@ -204,8 +206,8 @@ public class ServicioEnviosTests
         var negocioDb = new NegocioDbContext(new DbContextOptionsBuilder<NegocioDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
         var coreDb = new CoreDbContext(new DbContextOptionsBuilder<CoreDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
         var reloj = new RelojFijo();
-        var servicioPermisos = new ServicioPermisos(coreDb, reloj);
-        var servicio = new ServicioEnvios(negocioDb, servicioPermisos, reloj);
+        var servicioPermisos = new ServicioPermisos(coreDb, reloj, new ServicioNotificaciones(coreDb, new ColaCorreos(coreDb, reloj), reloj));
+        var servicio = new ServicioEnvios(negocioDb, servicioPermisos, reloj, new ServicioNotificaciones(coreDb, new ColaCorreos(coreDb, reloj), reloj));
 
         var creado = await servicio.CrearAsync(5, DatosValidos());
 
@@ -227,8 +229,8 @@ public class ServicioEnviosTests
         var negocioDb = new NegocioDbContext(new DbContextOptionsBuilder<NegocioDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
         var coreDb = new CoreDbContext(new DbContextOptionsBuilder<CoreDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
         var reloj = new RelojFijo();
-        var servicioPermisos = new ServicioPermisos(coreDb, reloj);
-        var servicio = new ServicioEnvios(negocioDb, servicioPermisos, reloj);
+        var servicioPermisos = new ServicioPermisos(coreDb, reloj, new ServicioNotificaciones(coreDb, new ColaCorreos(coreDb, reloj), reloj));
+        var servicio = new ServicioEnvios(negocioDb, servicioPermisos, reloj, new ServicioNotificaciones(coreDb, new ColaCorreos(coreDb, reloj), reloj));
 
         var creado = await servicio.CrearAsync(5, DatosValidos());
         var envio = await negocioDb.Envios.FindAsync(creado.Valor);
@@ -253,8 +255,8 @@ public class ServicioEnviosTests
         var negocioDb = new NegocioDbContext(new DbContextOptionsBuilder<NegocioDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
         var coreDb = new CoreDbContext(new DbContextOptionsBuilder<CoreDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
         var reloj = new RelojFijo();
-        var servicioPermisos = new ServicioPermisos(coreDb, reloj);
-        var servicio = new ServicioEnvios(negocioDb, servicioPermisos, reloj);
+        var servicioPermisos = new ServicioPermisos(coreDb, reloj, new ServicioNotificaciones(coreDb, new ColaCorreos(coreDb, reloj), reloj));
+        var servicio = new ServicioEnvios(negocioDb, servicioPermisos, reloj, new ServicioNotificaciones(coreDb, new ColaCorreos(coreDb, reloj), reloj));
 
         var creado = await servicio.CrearAsync(5, DatosValidos());
         var envio = await negocioDb.Envios.FindAsync(creado.Valor);
@@ -284,8 +286,8 @@ public class ServicioEnviosTests
         var negocioDb = new NegocioDbContext(new DbContextOptionsBuilder<NegocioDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
         var coreDb = new CoreDbContext(new DbContextOptionsBuilder<CoreDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
         var reloj = new RelojFijo();
-        var servicioPermisos = new ServicioPermisos(coreDb, reloj);
-        var servicio = new ServicioEnvios(negocioDb, servicioPermisos, reloj);
+        var servicioPermisos = new ServicioPermisos(coreDb, reloj, new ServicioNotificaciones(coreDb, new ColaCorreos(coreDb, reloj), reloj));
+        var servicio = new ServicioEnvios(negocioDb, servicioPermisos, reloj, new ServicioNotificaciones(coreDb, new ColaCorreos(coreDb, reloj), reloj));
 
         var creado = await servicio.CrearAsync(5, DatosValidos());
 

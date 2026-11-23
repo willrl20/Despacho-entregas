@@ -1,6 +1,7 @@
 using Despacho.Core.Contrasenas;
 using Despacho.Core.Correos;
 using Despacho.Core.Documentos;
+using Despacho.Core.Notificaciones;
 using Despacho.Core.Permisos;
 using Despacho.Core.Sesiones;
 using Despacho.Core.Usuarios;
@@ -22,6 +23,8 @@ public class CoreDbContext : DbContext
     public DbSet<SolicitudPermiso> SolicitudesPermiso => Set<SolicitudPermiso>();
     public DbSet<PermisoConcedido> PermisosConcedidos => Set<PermisoConcedido>();
     public DbSet<Documento> Documentos => Set<Documento>();
+    public DbSet<Notificacion> Notificaciones => Set<Notificacion>();
+    public DbSet<PreferenciaNotificacion> PreferenciasNotificacion => Set<PreferenciaNotificacion>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -135,6 +138,25 @@ public class CoreDbContext : DbContext
                 .HasMaxLength(100);
 
             entity.HasIndex(d => d.PropietarioId);
+        });
+
+        modelBuilder.Entity<Notificacion>(entity =>
+        {
+            entity.Property(n => n.Titulo)
+                .IsRequired()
+                .HasMaxLength(200);
+
+            entity.Property(n => n.Mensaje)
+                .IsRequired()
+                .HasMaxLength(1000);
+
+            entity.HasIndex(n => new { n.DestinatarioId, n.Leida });
+        });
+
+        modelBuilder.Entity<PreferenciaNotificacion>(entity =>
+        {
+            entity.HasIndex(p => p.UsuarioId)
+                .IsUnique();
         });
     }
 }

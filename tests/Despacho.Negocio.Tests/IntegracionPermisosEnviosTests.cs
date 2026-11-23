@@ -1,4 +1,6 @@
+using Despacho.Core.Correos;
 using Despacho.Core.Datos;
+using Despacho.Core.Notificaciones;
 using Despacho.Core.Permisos;
 using Despacho.Core.Usuarios;
 using Despacho.Negocio.Datos;
@@ -36,8 +38,8 @@ public class IntegracionPermisosEnviosTests
         coreDb.Usuarios.Add(new Usuario { Id = 20, Correo = "admin@test.com", Rol = Rol.Administrador, Activada = true });
         await coreDb.SaveChangesAsync();
 
-        var servicioPermisos = new ServicioPermisos(coreDb, reloj);
-        var servicio = new ServicioEnvios(negocioDb, servicioPermisos, reloj);
+        var servicioPermisos = new ServicioPermisos(coreDb, reloj, new ServicioNotificaciones(coreDb, new ColaCorreos(coreDb, reloj), reloj));
+        var servicio = new ServicioEnvios(negocioDb, servicioPermisos, reloj, new ServicioNotificaciones(coreDb, new ColaCorreos(coreDb, reloj), reloj));
 
         var creado = await servicio.CrearAsync(30, DatosValidos());
 
@@ -66,8 +68,8 @@ public class IntegracionPermisosEnviosTests
         coreDb.Usuarios.Add(new Usuario { Id = 20, Correo = "admin@test.com", Rol = Rol.Administrador, Activada = true });
         await coreDb.SaveChangesAsync();
 
-        var servicioPermisos = new ServicioPermisos(coreDb, reloj);
-        var servicio = new ServicioEnvios(negocioDb, servicioPermisos, reloj);
+        var servicioPermisos = new ServicioPermisos(coreDb, reloj, new ServicioNotificaciones(coreDb, new ColaCorreos(coreDb, reloj), reloj));
+        var servicio = new ServicioEnvios(negocioDb, servicioPermisos, reloj, new ServicioNotificaciones(coreDb, new ColaCorreos(coreDb, reloj), reloj));
 
         var creado = await servicio.CrearAsync(30, DatosValidos());
 

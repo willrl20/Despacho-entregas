@@ -137,6 +137,62 @@ namespace Despacho.Core.Datos.Migraciones
                     b.ToTable("Documentos");
                 });
 
+            modelBuilder.Entity("Despacho.Core.Notificaciones.Notificacion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreadaEnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("DestinatarioId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("Leida")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Mensaje")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("Titulo")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DestinatarioId", "Leida");
+
+                    b.ToTable("Notificaciones");
+                });
+
+            modelBuilder.Entity("Despacho.Core.Notificaciones.PreferenciaNotificacion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("CorreoActivo")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("UsuarioId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UsuarioId")
+                        .IsUnique();
+
+                    b.ToTable("PreferenciasNotificacion");
+                });
+
             modelBuilder.Entity("Despacho.Core.Permisos.PermisoConcedido", b =>
                 {
                     b.Property<int>("Id")
