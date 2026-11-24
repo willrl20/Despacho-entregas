@@ -3,6 +3,8 @@ using Despacho.Core.Notificaciones;
 using Despacho.Core.Permisos;
 using Despacho.Negocio.Datos;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Despacho.Negocio.Envios;
 
@@ -29,13 +31,15 @@ public sealed class ServicioEnvios : IServicioEnvios
     public const string TituloEnvioEntregado = "Tu envío fue entregado";
 
     private readonly IServicioNotificaciones _notificaciones;
+    private readonly ILogger _logger;
 
-    public ServicioEnvios(NegocioDbContext db, IServicioPermisos permisos, IReloj reloj, IServicioNotificaciones notificaciones)
+    public ServicioEnvios(NegocioDbContext db, IServicioPermisos permisos, IReloj reloj, IServicioNotificaciones notificaciones, ILogger<ServicioEnvios>? logger = null)
     {
         _db = db;
         _permisos = permisos;
         _reloj = reloj;
         _notificaciones = notificaciones;
+        _logger = logger ?? NullLogger<ServicioEnvios>.Instance;
     }
 
     private static Resultado<Validado> Validar(DatosEnvio? datos)
@@ -214,10 +218,11 @@ public sealed class ServicioEnvios : IServicioEnvios
         envio.RepartidorId = repartidorId;
         await _db.SaveChangesAsync();
 
-        await _notificaciones.NotificarAsync(
-            envio.ClienteId,
-            TituloEnvioAceptado,
-            $"Tu envío #{envio.Id} fue aceptado por un repartidor.");
+        await AvisoSeguro.EjecutarAsync(_logger, "EnvioAceptado", envio.ClienteId, () =>
+            _notificaciones.NotificarAsync(
+                envio.ClienteId,
+                TituloEnvioAceptado,
+                $"Tu envío #{envio.Id} fue aceptado por un repartidor."));
 
         return Resultado.Ok();
     }
@@ -272,10 +277,11 @@ public sealed class ServicioEnvios : IServicioEnvios
 
         if (nuevo == EstadoEnvio.Entregado)
         {
-            await _notificaciones.NotificarAsync(
-                envio.ClienteId,
-                TituloEnvioEntregado,
-                $"Tu envío #{envio.Id} fue entregado.");
+            await AvisoSeguro.EjecutarAsync(_logger, "EnvioEntregado", envio.ClienteId, () =>
+                _notificaciones.NotificarAsync(
+                    envio.ClienteId,
+                    TituloEnvioEntregado,
+                    $"Tu envío #{envio.Id} fue entregado."));
         }
 
         return Resultado.Ok();
