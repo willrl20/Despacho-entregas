@@ -265,6 +265,9 @@ public sealed class ServicioEnvios : IServicioEnvios
         if (!envio.CambiarEstado(nuevo))
             return Resultado.Falla(MensajeTransicionInvalida);
 
+        if (nuevo == EstadoEnvio.Entregado)
+            envio.EntregadoEnUtc = _reloj.AhoraUtc;
+
         await _db.SaveChangesAsync();
 
         if (nuevo == EstadoEnvio.Entregado)

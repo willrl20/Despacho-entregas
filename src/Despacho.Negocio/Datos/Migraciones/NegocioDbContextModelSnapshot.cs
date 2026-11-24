@@ -68,6 +68,9 @@ namespace Despacho.Negocio.Datos.Migraciones
                     b.Property<double>("DistanciaKm")
                         .HasColumnType("float");
 
+                    b.Property<DateTime?>("EntregadoEnUtc")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("Estado")
                         .IsRequired()
                         .HasMaxLength(20)
