@@ -66,6 +66,7 @@ Reglas:
 
 - Un solo momento con animación: la caja del logo "arranca" al confirmar un envío.
 - El repartidor de las pantallas de entrada también se mueve (ruedas, calle y líneas de velocidad) y se detiene con `prefers-reduced-motion`.
+- Entrada animada de las pantallas de entrada: primero se ven solo el logo y el repartidor, centrados; tras 1.2 segundos se mueven a su lugar y aparece el formulario. Reglas: dura menos de 2 segundos en total, sale solo la primera vez por pestaña (`sessionStorage`, clave `dashgo.intro`), se salta con un clic o una tecla, y no aparece con `prefers-reduced-motion`. Mientras dura, el formulario no recibe el foco del teclado.
 - Lo demás, sin animaciones decorativas. Se respeta `prefers-reduced-motion`.
 
 ## Cómo habla DashGo

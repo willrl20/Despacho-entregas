@@ -1,12 +1,64 @@
 .acceso {
+  --acceso-relleno-superior: var(--espacio-8);
+  --acceso-mover: 600ms;
+  --acceso-curva: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --acceso-escala-intro: 1.8;
+
   position: relative;
   display: flex;
   justify-content: center;
   align-items: flex-start;
   min-height: 100dvh;
-  padding: var(--espacio-8) var(--espacio-16) var(--espacio-32);
+  padding: var(--acceso-relleno-superior) var(--espacio-16) var(--espacio-32);
   overflow-x: clip;
   isolation: isolate;
+}
+
+.acceso--intro {
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.acceso__presentacion .logo,
+.acceso__presentacion .acceso__repartidor {
+  transform-origin: center;
+  transition: transform var(--acceso-mover) var(--acceso-curva);
+}
+
+.acceso--intro .acceso__presentacion .logo {
+  transition: none;
+  transform: translate(var(--intro-logo-x, 0px), var(--intro-logo-y, 0px)) scale(var(--acceso-escala-intro));
+}
+
+.acceso--intro .acceso__presentacion .acceso__repartidor {
+  transition: none;
+  transform: translate(var(--intro-repartidor-x, 0px), var(--intro-repartidor-y, 0px));
+}
+
+.acceso__aparece {
+  transition: opacity 400ms ease-out 200ms;
+}
+
+.acceso--intro .acceso__aparece {
+  opacity: 0;
+}
+
+.acceso__formulario {
+  transition:
+    opacity 500ms ease-out 100ms,
+    transform 500ms var(--acceso-curva) 100ms;
+}
+
+.acceso--intro .acceso__formulario {
+  opacity: 0;
+  transform: translateY(24px);
+}
+
+.acceso--sin-transicion .acceso__presentacion .logo,
+.acceso--sin-transicion .acceso__presentacion .acceso__repartidor,
+.acceso--sin-transicion .acceso__aparece,
+.acceso--sin-transicion .acceso__formulario {
+  transition: none;
 }
 
 .acceso::before {
@@ -107,8 +159,9 @@
 
 @media (min-width: 48em) {
   .acceso {
-    align-items: center;
-    padding: var(--espacio-32) var(--espacio-24);
+    --acceso-relleno-superior: 64px;
+
+    padding: var(--acceso-relleno-superior) var(--espacio-24) var(--espacio-32);
   }
 
   .acceso__rejilla {
@@ -135,7 +188,30 @@
 
 @media (min-width: 64em) {
   .acceso {
+    align-items: center;
     padding: var(--espacio-32);
+  }
+
+  .acceso {
+    --acceso-escala-intro: 2.5;
+  }
+
+  .acceso--intro .acceso__formulario {
+    transform: translateX(32px);
+  }
+
+  .acceso__presentacion .logo {
+    gap: calc(var(--espacio-12) * 1.5);
+    padding: var(--espacio-12);
+  }
+
+  .acceso__presentacion .logo__simbolo {
+    width: 84px;
+    height: 78px;
+  }
+
+  .acceso__presentacion .logo__palabra {
+    font-size: calc(var(--texto-31) * 1.5);
   }
 
   .acceso__rejilla {
