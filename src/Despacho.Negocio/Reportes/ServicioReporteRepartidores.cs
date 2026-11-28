@@ -29,8 +29,8 @@ public sealed class ServicioReporteRepartidores : IServicioReporteRepartidores
         var consulta = _db.Envios.Where(e =>
             e.Estado == EstadoEnvio.Entregado
             && e.RepartidorId != null
-            && e.CreadoEnUtc >= inicio
-            && e.CreadoEnUtc < fin);
+            && (e.EntregadoEnUtc ?? e.CreadoEnUtc) >= inicio
+            && (e.EntregadoEnUtc ?? e.CreadoEnUtc) < fin);
 
         if (usuario.Rol != Rol.Administrador)
             consulta = consulta.Where(e => e.RepartidorId == usuario.Id);

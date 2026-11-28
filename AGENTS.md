@@ -56,3 +56,8 @@ Al terminar, lista los archivos que creaste, modificaste y eliminaste.
 - Sin librerías de componentes ni Tailwind.
 - Todo texto de la interfaz va en español.
 - Nunca guardar contraseñas ni datos sensibles en localStorage.
+Reglas agregadas después de la auditoría (Asignación 3)
+Todo proceso que pueda correr en dos copias a la vez, como el procesador de la cola, reserva cada registro y guarda la reserva antes de trabajarlo. Si otra copia ya lo reservó, lo salta. Siempre lleva una prueba con dos contextos sobre la misma base (Hallazgo 1).
+Un reporte filtra por la fecha del hecho que cuenta: si cuenta envíos entregados, usa EntregadoEnUtc, no CreadoEnUtc. Si la entidad no guarda esa fecha, agrégala con una migración nueva y pregunta antes de usar otra fecha en su lugar (Hallazgo 2).
+Las notificaciones se crean con AvisoSeguro.EjecutarAsync después de guardar la operación. Si la notificación falla, se registra como advertencia y la operación responde éxito. Nunca ignores el Resultado que devuelve un servicio (Hallazgo 3).
+Toda funcionalidad nueva incluye pruebas de dos casos que antes no pedía: dos peticiones al mismo tiempo y una dependencia que falla (otra base, el correo o una notificación).

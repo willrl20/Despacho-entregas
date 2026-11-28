@@ -7,6 +7,7 @@ public class Envio
     public int? RepartidorId { get; set; }
     public EstadoEnvio Estado { get; private set; } = EstadoEnvio.Pendiente;
     public DateTime CreadoEnUtc { get; set; }
+    public DateTime? EntregadoEnUtc { get; set; }
     public ModalidadEnvio Modalidad { get; set; }
     public double OrigenLatitud { get; set; }
     public double OrigenLongitud { get; set; }

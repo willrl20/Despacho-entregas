@@ -1,3 +1,4 @@
+using Despacho.Core.Auditoria;
 using Despacho.Core.Comun;
 using Despacho.Core.Correos;
 using Despacho.Core.Datos;
@@ -29,7 +30,7 @@ public sealed class ServicioContrasenas : IServicioContrasenas
         _cola = cola;
     }
 
-    private void EmitirCodigo(Usuario usuario)
+    private void EmitirCodigo(Usuario usuario, int? forzadoPorAdministradorId = null)
     {
         var pendientes = _db.CodigosRecuperacion
             .Where(c => c.UsuarioId == usuario.Id && !c.Usado && !c.Invalidado)
@@ -46,7 +47,8 @@ public sealed class ServicioContrasenas : IServicioContrasenas
         {
             UsuarioId = usuario.Id,
             Codigo = codigo,
-            VenceEnUtc = _reloj.AhoraUtc.AddMinutes(MinutosVigencia)
+            VenceEnUtc = _reloj.AhoraUtc.AddMinutes(MinutosVigencia),
+            ForzadoPorAdministradorId = forzadoPorAdministradorId
         });
 
         _cola.Encolar(usuario.Correo, "Código para restablecer tu contraseña", $"Tu código es {codigo}. Vence en {MinutosVigencia} minutos. Si no lo pediste, ignora este correo.");
@@ -108,19 +110,23 @@ public sealed class ServicioContrasenas : IServicioContrasenas
         usuario.IntentosFallidos = 0;
         usuario.BloqueadoHastaUtc = null;
 
+        var origen = registro.ForzadoPorAdministradorId.HasValue ? TextosAuditoria.RestablecidaAdministrador : TextosAuditoria.RestablecidaPropio;
+        _db.RegistrarAuditoria(_reloj, usuario.Id, AccionesAuditoria.RestablecerContrasena, EntidadesAuditoria.Usuario, usuario.Id, TextosAuditoria.ContrasenaAnterior, origen);
+
         await RevocarSesionesAsync(usuario.Id);
         await _db.SaveChangesAsync();
         return Resultado.Ok();
     }
 
-    public async Task<Resultado> ForzarRestablecimientoAsync(int usuarioId)
+    public async Task<Resultado> ForzarRestablecimientoAsync(int adminId, int usuarioId)
     {
         var usuario = await _db.Usuarios.FindAsync(usuarioId);
         if (usuario is null)
             return Resultado.Falla(MensajeNoExiste);
 
         usuario.HashContrasena = _hasher.Hashear(Convert.ToHexString(System.Security.Cryptography.RandomNumberGenerator.GetBytes(32)));
-        EmitirCodigo(usuario);
+        EmitirCodigo(usuario, adminId);
+        _db.RegistrarAuditoria(_reloj, adminId, AccionesAuditoria.ForzarRestablecimiento, EntidadesAuditoria.Usuario, usuario.Id, TextosAuditoria.ContrasenaVigente, TextosAuditoria.CodigoEnviado);
         await RevocarSesionesAsync(usuario.Id);
         await _db.SaveChangesAsync();
         return Resultado.Ok();
