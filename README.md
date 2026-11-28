@@ -428,3 +428,127 @@ Los dos reportes devuelven valores agrupados (no el listado de registros), calcu
 **Pregunta que responde el reporte del negocio:** ¿cuántos envíos entregó cada repartidor, cuántos kilómetros recorrió y cuánto dinero generó en un período?
 
 **Según el rol:** el Administrador ve los datos de todos. Un Estándar ve solo lo suyo: en el de solicitudes, las que él creó; en el de repartidores, solo su propia fila.
+
+## Auditoría
+
+Cada cambio importante deja un registro en el historial, guardado en la misma operación que el cambio: se guardan los dos o ninguno. Cada registro tiene `id`, `usuarioId` (quién actuó), `accion`, `entidad` (`SolicitudPermiso`, `Documento` o `Usuario`), `entidadId`, `fechaUtc` (en UTC), `valorAnterior` y `valorNuevo`. Ningún campo viene vacío. Nunca se guardan contraseñas, hashes ni códigos.
+
+| Evento | Acción registrada | Valor anterior → valor nuevo |
+|---|---|---|
+| Aprobar una solicitud | `AprobarSolicitud` | `Pendiente` → `Aplicada` |
+| Rechazar una solicitud | `RechazarSolicitud` | `Pendiente` → `Rechazada: <motivo>` |
+| Subir un documento | `SubirDocumento` | `(no existía)` → nombre del archivo |
+| Eliminar un documento | `EliminarDocumento` | nombre del archivo → `(eliminado)` |
+| Cambiar el rol | `CambiarRol` | `Estandar` → `Administrador` (o al revés) |
+| Desactivar un usuario | `DesactivarUsuario` | `Activo` → `Desactivado` |
+| Reactivar un usuario | `ReactivarUsuario` | `Desactivado` → `Activo` |
+| Forzar un restablecimiento | `ForzarRestablecimiento` | `Contraseña vigente` → `Código de restablecimiento enviado` |
+| Restablecer la contraseña | `RestablecerContrasena` | `Contraseña anterior` → `Contraseña restablecida (iniciado por el propio usuario)` o `(iniciado por un Administrador)` |
+
+### Preparación
+
+Se necesitan un Administrador (el de `DESPACHO_ADMIN_CORREO`) y un Estándar activado, con la Api en http://localhost:8080. Los comandos son para PowerShell y usan `curl.exe`. Cambia los correos y las contraseñas por los tuyos.
+
+```
+$base = "http://localhost:8080"
+
+function Json($objeto) {
+    $archivo = New-TemporaryFile
+    ($objeto | ConvertTo-Json -Compress) | Set-Content $archivo -Encoding ascii
+    "@$archivo"
+}
+
+function Entrar($correo, $contrasena) {
+    (curl.exe -s -X POST "$base/api/sesion/iniciar" -H "Content-Type: application/json" --data (Json @{ correo = $correo; contrasena = $contrasena }) | ConvertFrom-Json).token
+}
+
+$tokenA = Entrar "admin@ejemplo.com" "ClaveAdmin123"
+$tokenR = Entrar "r@ejemplo.com" "ClaveR12345"
+
+$usuarios = curl.exe -s "$base/api/usuarios" -H "Authorization: Bearer $tokenA" | ConvertFrom-Json
+$idR = ($usuarios | Where-Object { $_.correo -eq "r@ejemplo.com" }).id
+```
+
+### Cómo provocar cada evento
+
+**Rechazar una solicitud.** R pide un permiso y el Administrador lo rechaza con motivo:
+
+```
+$s = curl.exe -s -X POST "$base/api/solicitudes" -H "Authorization: Bearer $tokenR" -H "Content-Type: application/json" --data (Json @{ permiso = "Administrador" }) | ConvertFrom-Json
+curl.exe -s -X POST "$base/api/solicitudes/$($s.id)/rechazar" -H "Authorization: Bearer $tokenA" -H "Content-Type: application/json" --data (Json @{ motivo = "Falta la licencia" })
+```
+
+**Aprobar una solicitud.** Igual, pero con el permiso Repartidor:
+
+```
+$s = curl.exe -s -X POST "$base/api/solicitudes" -H "Authorization: Bearer $tokenR" -H "Content-Type: application/json" --data (Json @{ permiso = "Repartidor" }) | ConvertFrom-Json
+curl.exe -s -X POST "$base/api/solicitudes/$($s.id)/aprobar" -H "Authorization: Bearer $tokenA"
+```
+
+**Subir y eliminar un documento.** Lo hace R (o el Administrador para eliminar):
+
+```
+Set-Content licencia.pdf "contenido de prueba"
+$d = curl.exe -s -X POST "$base/api/documentos" -H "Authorization: Bearer $tokenR" -F "archivo=@licencia.pdf;type=application/pdf" | ConvertFrom-Json
+curl.exe -s -X DELETE "$base/api/documentos/$($d.id)" -H "Authorization: Bearer $tokenR"
+```
+
+**Cambiar un rol.** Lo hace el Administrador; el segundo comando devuelve a R a Estándar y deja otro registro:
+
+```
+curl.exe -s -X PUT "$base/api/usuarios/$idR/rol" -H "Authorization: Bearer $tokenA" -H "Content-Type: application/json" --data (Json @{ rol = "Administrador" })
+curl.exe -s -X PUT "$base/api/usuarios/$idR/rol" -H "Authorization: Bearer $tokenA" -H "Content-Type: application/json" --data (Json @{ rol = "Estandar" })
+```
+
+**Desactivar y reactivar un usuario.** Al desactivar, las sesiones de R se cierran; después de reactivar, R inicia sesión de nuevo:
+
+```
+curl.exe -s -X POST "$base/api/usuarios/$idR/desactivar" -H "Authorization: Bearer $tokenA"
+curl.exe -s -X POST "$base/api/usuarios/$idR/reactivar" -H "Authorization: Bearer $tokenA"
+$tokenR = Entrar "r@ejemplo.com" "ClaveR12345"
+```
+
+**Restablecer la contraseña como el propio usuario.** R pide un código; llega por correo. Sin correo real, se lee de la base (cambia `<CLAVE_SA>` por la clave `sa` de tu `.env`):
+
+```
+curl.exe -s -X POST "$base/api/contrasenas/recuperar" -H "Content-Type: application/json" --data (Json @{ correo = "r@ejemplo.com" })
+docker compose exec db /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "<CLAVE_SA>" -C -d DespachoEntregas -h -1 -W -Q "SELECT TOP 1 c.Codigo FROM CodigosRecuperacion c JOIN Usuarios u ON u.Id = c.UsuarioId WHERE u.Correo = 'r@ejemplo.com' ORDER BY c.Id DESC"
+curl.exe -s -X POST "$base/api/contrasenas/restablecer" -H "Content-Type: application/json" --data (Json @{ correo = "r@ejemplo.com"; codigo = "123456"; contrasenaNueva = "ClaveNueva123" })
+```
+
+Cambia `123456` por el código que leíste. Queda el registro `RestablecerContrasena` con `(iniciado por el propio usuario)`.
+
+**Forzar un restablecimiento como Administrador.** El Administrador fuerza el cambio; R usa el código que le llega:
+
+```
+curl.exe -s -X POST "$base/api/usuarios/$idR/forzar-restablecimiento" -H "Authorization: Bearer $tokenA"
+docker compose exec db /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "<CLAVE_SA>" -C -d DespachoEntregas -h -1 -W -Q "SELECT TOP 1 c.Codigo FROM CodigosRecuperacion c JOIN Usuarios u ON u.Id = c.UsuarioId WHERE u.Correo = 'r@ejemplo.com' ORDER BY c.Id DESC"
+curl.exe -s -X POST "$base/api/contrasenas/restablecer" -H "Content-Type: application/json" --data (Json @{ correo = "r@ejemplo.com"; codigo = "123456"; contrasenaNueva = "ClaveOtra123" })
+```
+
+Quedan dos registros: `ForzarRestablecimiento` (del Administrador) y `RestablecerContrasena` con `(iniciado por un Administrador)` (de R).
+
+### Cómo consultar el historial
+
+Solo el Administrador consulta: `GET /api/auditoria`. Todos los filtros son opcionales y se pueden combinar. Los resultados salen del más nuevo al más viejo. Las fechas son `AAAA-MM-DD`, en UTC, y el día `hasta` se incluye completo.
+
+```
+curl.exe -s "$base/api/auditoria" -H "Authorization: Bearer $tokenA"
+curl.exe -s "$base/api/auditoria?usuarioId=$idR" -H "Authorization: Bearer $tokenA"
+curl.exe -s "$base/api/auditoria?entidad=Documento" -H "Authorization: Bearer $tokenA"
+curl.exe -s "$base/api/auditoria?desde=2026-11-20&hasta=2026-11-20" -H "Authorization: Bearer $tokenA"
+curl.exe -s "$base/api/auditoria?usuarioId=$idR&entidad=Usuario&desde=2026-11-01&hasta=2026-11-30" -H "Authorization: Bearer $tokenA"
+```
+
+| Petición | Respuesta |
+|---|---|
+| Sin token | 401 |
+| Con el token de un Estándar | 403 |
+| `usuarioId=abc`, `entidad=Envio`, `desde=2026-13-40` o `desde` posterior a `hasta` | 400 con un mensaje claro |
+| Un filtro sin coincidencias | 200 con una lista vacía |
+
+### El historial no se edita ni se borra
+
+No existe ningún endpoint `PUT`, `PATCH` ni `DELETE` sobre `/api/auditoria`, el servicio de auditoría solo tiene el método de consulta, y `CoreDbContext` lanza una excepción y no guarda nada si algún código intenta modificar o borrar un registro.
+
+El historial vive en la base de datos, en el volumen `datos-sql`. Sobrevive a `docker compose down` (sin `-v`): al volver a ejecutar `docker compose up`, los registros siguen ahí. Solo `docker compose down -v` los borra, junto con el resto de los datos.
