@@ -1,3 +1,4 @@
+﻿using Despacho.Core.Auditoria;
 using Despacho.Core.Contrasenas;
 using Despacho.Core.Correos;
 using Despacho.Core.Documentos;
@@ -25,6 +26,7 @@ public class CoreDbContext : DbContext
     public DbSet<Documento> Documentos => Set<Documento>();
     public DbSet<Notificacion> Notificaciones => Set<Notificacion>();
     public DbSet<PreferenciaNotificacion> PreferenciasNotificacion => Set<PreferenciaNotificacion>();
+    public DbSet<RegistroAuditoria> RegistrosAuditoria => Set<RegistroAuditoria>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -169,5 +171,108 @@ public class CoreDbContext : DbContext
             entity.HasIndex(p => p.UsuarioId)
                 .IsUnique();
         });
+
+        modelBuilder.Entity<RegistroAuditoria>(entity =>
+        {
+            entity.Property(r => r.Accion)
+                .IsRequired()
+                .HasMaxLength(50);
+
+            entity.Property(r => r.Entidad)
+                .IsRequired()
+                .HasMaxLength(50);
+
+            entity.Property(r => r.ValorAnterior)
+                .IsRequired()
+                .HasMaxLength(AuditoriaExtensiones.LargoMaximoValor);
+
+            entity.Property(r => r.ValorNuevo)
+                .IsRequired()
+                .HasMaxLength(AuditoriaExtensiones.LargoMaximoValor);
+
+            entity.Ignore(r => r.EntidadReferencia);
+
+            entity.HasIndex(r => r.UsuarioId);
+            entity.HasIndex(r => r.Entidad);
+            entity.HasIndex(r => r.FechaUtc);
+        });
+    }
+
+    public const string MensajeAuditoriaInmutable = "El historial de auditoría no se puede modificar ni borrar.";
+
+    public override int SaveChanges(bool acceptAllChangesOnSuccess)
+    {
+        VerificarInmutabilidad();
+        var pendientes = SepararAuditoriasPendientes();
+        if (pendientes.Count == 0)
+            return base.SaveChanges(acceptAllChangesOnSuccess);
+
+        using var transaccion = IniciarTransaccion();
+        var guardados = base.SaveChanges(acceptAllChangesOnSuccess);
+        CompletarAuditorias(pendientes);
+        guardados += base.SaveChanges(acceptAllChangesOnSuccess);
+        transaccion?.Commit();
+        return guardados;
+    }
+
+    public override async Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+    {
+        VerificarInmutabilidad();
+        var pendientes = SepararAuditoriasPendientes();
+        if (pendientes.Count == 0)
+            return await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+
+        await using var transaccion = await IniciarTransaccionAsync(cancellationToken);
+        var guardados = await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+        CompletarAuditorias(pendientes);
+        guardados += await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+        if (transaccion != null)
+            await transaccion.CommitAsync(cancellationToken);
+        return guardados;
+    }
+
+    private void VerificarInmutabilidad()
+    {
+        var hayCambios = ChangeTracker.Entries<RegistroAuditoria>()
+            .Any(e => e.State == EntityState.Modified || e.State == EntityState.Deleted);
+
+        if (hayCambios)
+            throw new InvalidOperationException(MensajeAuditoriaInmutable);
+    }
+
+    private List<RegistroAuditoria> SepararAuditoriasPendientes()
+    {
+        var pendientes = ChangeTracker.Entries<RegistroAuditoria>()
+            .Where(e => e.State == EntityState.Added && e.Entity.EntidadReferencia != null)
+            .ToList();
+
+        foreach (var entrada in pendientes)
+            entrada.State = EntityState.Detached;
+
+        return pendientes.Select(e => e.Entity).ToList();
+    }
+
+    private void CompletarAuditorias(List<RegistroAuditoria> pendientes)
+    {
+        foreach (var registro in pendientes)
+        {
+            registro.EntidadId = (int)Entry(registro.EntidadReferencia!).Property("Id").CurrentValue!;
+            registro.EntidadReferencia = null;
+            RegistrosAuditoria.Add(registro);
+        }
+    }
+
+    private Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction? IniciarTransaccion()
+    {
+        return Database.IsRelational() && Database.CurrentTransaction == null
+            ? Database.BeginTransaction()
+            : null;
+    }
+
+    private async Task<Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction?> IniciarTransaccionAsync(CancellationToken cancellationToken)
+    {
+        return Database.IsRelational() && Database.CurrentTransaction == null
+            ? await Database.BeginTransactionAsync(cancellationToken)
+            : null;
     }
 }

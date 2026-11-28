@@ -1,3 +1,4 @@
+using Despacho.Core.Auditoria;
 using Despacho.Core.Comun;
 using Despacho.Core.Datos;
 using Microsoft.EntityFrameworkCore;
@@ -58,6 +59,7 @@ public sealed class ServicioDocumentos : IServicioDocumentos
         };
 
         _db.Documentos.Add(documento);
+        _db.RegistrarAuditoriaDeNuevo(_reloj, usuarioId, AccionesAuditoria.SubirDocumento, EntidadesAuditoria.Documento, documento, TextosAuditoria.NoExistia, nombreArchivo);
         await _db.SaveChangesAsync();
 
         return Resultado<int>.Ok(documento.Id);
@@ -105,6 +107,7 @@ public sealed class ServicioDocumentos : IServicioDocumentos
 
         documento.Eliminado = true;
         documento.EliminadoEnUtc = _reloj.AhoraUtc;
+        _db.RegistrarAuditoria(_reloj, usuarioId, AccionesAuditoria.EliminarDocumento, EntidadesAuditoria.Documento, documento.Id, documento.Nombre, TextosAuditoria.Eliminado);
         await _db.SaveChangesAsync();
 
         return Resultado.Ok();

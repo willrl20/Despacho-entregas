@@ -18,9 +18,10 @@ public static class UsuariosEndpoints
             return Results.Ok(await servicio.ListarAsync());
         });
 
-        grupo.MapPut("/{id:int}/rol", async (int id, SolicitudCambioRol? solicitud, IServicioAdministracion servicio) =>
+        grupo.MapPut("/{id:int}/rol", async (int id, SolicitudCambioRol? solicitud, HttpContext http, IServicioAdministracion servicio) =>
         {
-            var resultado = await servicio.CambiarRolAsync(id, solicitud?.Rol);
+            var admin = (UsuarioActual)http.Items[FiltroRol.ClaveUsuario]!;
+            var resultado = await servicio.CambiarRolAsync(admin.Id, id, solicitud?.Rol);
             if (resultado.Exito)
                 return Results.Ok(new { mensaje = "Rol actualizado." });
             return Results.BadRequest(new { error = resultado.Error });
@@ -35,17 +36,19 @@ public static class UsuariosEndpoints
             return Results.BadRequest(new { error = resultado.Error });
         });
 
-        grupo.MapPost("/{id:int}/reactivar", async (int id, IServicioAdministracion servicio) =>
+        grupo.MapPost("/{id:int}/reactivar", async (int id, HttpContext http, IServicioAdministracion servicio) =>
         {
-            var resultado = await servicio.ReactivarAsync(id);
+            var admin = (UsuarioActual)http.Items[FiltroRol.ClaveUsuario]!;
+            var resultado = await servicio.ReactivarAsync(admin.Id, id);
             if (resultado.Exito)
                 return Results.Ok(new { mensaje = "Usuario reactivado." });
             return Results.BadRequest(new { error = resultado.Error });
         });
 
-        grupo.MapPost("/{id:int}/forzar-restablecimiento", async (int id, IServicioContrasenas servicio) =>
+        grupo.MapPost("/{id:int}/forzar-restablecimiento", async (int id, HttpContext http, IServicioContrasenas servicio) =>
         {
-            var resultado = await servicio.ForzarRestablecimientoAsync(id);
+            var admin = (UsuarioActual)http.Items[FiltroRol.ClaveUsuario]!;
+            var resultado = await servicio.ForzarRestablecimientoAsync(admin.Id, id);
             if (resultado.Exito)
                 return Results.Ok(new { mensaje = "Se envió un código de restablecimiento al usuario." });
             return Results.BadRequest(new { error = resultado.Error });
