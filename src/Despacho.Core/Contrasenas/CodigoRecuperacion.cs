@@ -8,4 +8,5 @@ public class CodigoRecuperacion
     public DateTime VenceEnUtc { get; set; }
     public bool Usado { get; set; } = false;
     public bool Invalidado { get; set; } = false;
+    public int? ForzadoPorAdministradorId { get; set; }
 }

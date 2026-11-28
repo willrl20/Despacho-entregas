@@ -1,3 +1,4 @@
+﻿using Despacho.Core.Auditoria;
 using Despacho.Core.Comun;
 using Despacho.Core.Datos;
 using Despacho.Core.Notificaciones;
@@ -99,6 +100,8 @@ public sealed class ServicioPermisos : IServicioPermisos
         if (solicitud.SolicitanteId == aprobadorId)
             return Resultado.Falla(MensajePropia);
 
+        var estadoAnterior = solicitud.Estado.ToString();
+
         if (!solicitud.Aprobar(aprobadorId, _reloj.AhoraUtc))
             return Resultado.Falla(MensajeNoPendiente);
 
@@ -108,6 +111,8 @@ public sealed class ServicioPermisos : IServicioPermisos
 
         AplicarPermiso(usuario, solicitud.PermisoSolicitado);
         solicitud.MarcarAplicada();
+
+        _db.RegistrarAuditoria(_reloj, aprobadorId, AccionesAuditoria.AprobarSolicitud, EntidadesAuditoria.SolicitudPermiso, solicitud.Id, estadoAnterior, solicitud.Estado.ToString());
 
         await _db.SaveChangesAsync();
 
@@ -135,8 +140,12 @@ public sealed class ServicioPermisos : IServicioPermisos
         if (motivo.Trim().Length > 500)
             return Resultado.Falla(MensajeMotivoLargo);
 
+        var estadoAnterior = solicitud.Estado.ToString();
+
         if (!solicitud.Rechazar(aprobadorId, motivo, _reloj.AhoraUtc))
             return Resultado.Falla(MensajeNoPendiente);
+
+        _db.RegistrarAuditoria(_reloj, aprobadorId, AccionesAuditoria.RechazarSolicitud, EntidadesAuditoria.SolicitudPermiso, solicitud.Id, estadoAnterior, TextosAuditoria.PrefijoRechazada + solicitud.MotivoRechazo);
 
         await _db.SaveChangesAsync();
 
