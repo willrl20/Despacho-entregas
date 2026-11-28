@@ -78,3 +78,6 @@ Dado A1, cuando consulta con `usuarioId=abc`, con `entidad=Envio` (no existe), c
 **A-18 (RD-09)** Después de `docker compose down` (sin `-v`) y `docker compose up`, el historial sigue ahí.
 **A-19 (RD-03)** Nada en `src/Despacho.Core` usa `Despacho.Negocio`.
 **A-20** `dotnet test` pasa completo, incluidas las 110 pruebas que ya existían.
+
+**A-21 Una petición que no cambia nada no deja registro.**
+Dado R activo, cuando A1 lo reactiva, entonces no se agrega ningún registro; lo mismo al cambiar al mismo rol o desactivar a alguien ya desactivado.

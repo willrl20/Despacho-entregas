@@ -38,6 +38,9 @@ public sealed class ServicioAdministracion : IServicioAdministracion
         if (usuario is null)
             return Resultado.Falla(MensajeNoExiste);
 
+        if (usuario.Rol == nuevoRol)
+            return Resultado.Ok();
+
         var rolAnterior = usuario.Rol.ToString();
         usuario.Rol = nuevoRol;
         _db.RegistrarAuditoria(_reloj, adminId, AccionesAuditoria.CambiarRol, EntidadesAuditoria.Usuario, usuario.Id, rolAnterior, nuevoRol.ToString());
@@ -54,9 +57,11 @@ public sealed class ServicioAdministracion : IServicioAdministracion
         if (usuario is null)
             return Resultado.Falla(MensajeNoExiste);
 
-        var estadoAnterior = usuario.Desactivado ? TextosAuditoria.Desactivado : TextosAuditoria.Activo;
-        usuario.Desactivado = true;
-        _db.RegistrarAuditoria(_reloj, adminId, AccionesAuditoria.DesactivarUsuario, EntidadesAuditoria.Usuario, usuario.Id, estadoAnterior, TextosAuditoria.Desactivado);
+        if (!usuario.Desactivado)
+        {
+            usuario.Desactivado = true;
+            _db.RegistrarAuditoria(_reloj, adminId, AccionesAuditoria.DesactivarUsuario, EntidadesAuditoria.Usuario, usuario.Id, TextosAuditoria.Activo, TextosAuditoria.Desactivado);
+        }
 
         var sesiones = await _db.Sesiones
             .Where(s => s.UsuarioId == usuarioId && !s.Revocada)
@@ -77,9 +82,11 @@ public sealed class ServicioAdministracion : IServicioAdministracion
         if (usuario is null)
             return Resultado.Falla(MensajeNoExiste);
 
-        var estadoAnteriorReactivar = usuario.Desactivado ? TextosAuditoria.Desactivado : TextosAuditoria.Activo;
+        if (!usuario.Desactivado)
+            return Resultado.Ok();
+
         usuario.Desactivado = false;
-        _db.RegistrarAuditoria(_reloj, adminId, AccionesAuditoria.ReactivarUsuario, EntidadesAuditoria.Usuario, usuario.Id, estadoAnteriorReactivar, TextosAuditoria.Activo);
+        _db.RegistrarAuditoria(_reloj, adminId, AccionesAuditoria.ReactivarUsuario, EntidadesAuditoria.Usuario, usuario.Id, TextosAuditoria.Desactivado, TextosAuditoria.Activo);
         await _db.SaveChangesAsync();
         return Resultado.Ok();
     }
