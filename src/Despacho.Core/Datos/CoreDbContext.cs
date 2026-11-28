@@ -80,6 +80,9 @@ public class CoreDbContext : DbContext
             entity.Property(c => c.UltimoError)
                 .HasMaxLength(500);
 
+            entity.Property(c => c.ReservadoHastaUtc)
+                .IsConcurrencyToken();
+
             entity.HasIndex(c => c.Estado);
         });
 

@@ -92,6 +92,10 @@ namespace Despacho.Core.Datos.Migraciones
                     b.Property<int>("Intentos")
                         .HasColumnType("int");
 
+                    b.Property<DateTime?>("ReservadoHastaUtc")
+                        .IsConcurrencyToken()
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("UltimoError")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");

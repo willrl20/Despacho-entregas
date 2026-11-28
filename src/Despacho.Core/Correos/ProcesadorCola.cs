@@ -24,8 +24,9 @@ public sealed class ProcesadorCola : IProcesadorCola
 
     public async Task<ResumenEnvio> ProcesarPendientesAsync()
     {
+        var ahora = _reloj.AhoraUtc;
         var pendientes = await _db.CorreosEnCola
-            .Where(c => c.Estado == EstadoCorreo.Pendiente)
+            .Where(c => c.Estado == EstadoCorreo.Pendiente && (c.ReservadoHastaUtc == null || c.ReservadoHastaUtc < ahora))
             .OrderBy(c => c.Id)
             .ToListAsync();
 
@@ -33,25 +34,61 @@ public sealed class ProcesadorCola : IProcesadorCola
 
         foreach (var correo in pendientes)
         {
+            if (!await ReservarAsync(correo))
+                continue;
+
+            var enviadoOk = false;
             try
             {
                 await _remitente.EnviarAsync(correo.Destinatario, correo.Asunto, correo.Cuerpo);
                 correo.MarcarEnviado(_reloj.AhoraUtc);
-                enviados++;
+                enviadoOk = true;
             }
             catch (Exception ex)
             {
                 correo.RegistrarFallo(_reloj.AhoraUtc, DescribirError(ex));
-                if (correo.Estado == EstadoCorreo.Fallido)
-                    fallidos++;
-                else
-                    reintentos++;
             }
 
-            await _db.SaveChangesAsync();
+            try
+            {
+                await _db.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                _db.Entry(correo).State = EntityState.Detached;
+                continue;
+            }
+
+            if (enviadoOk)
+                enviados++;
+            else if (correo.Estado == EstadoCorreo.Fallido)
+                fallidos++;
+            else
+                reintentos++;
         }
 
         return new ResumenEnvio(enviados, reintentos, fallidos);
+    }
+
+    private async Task<bool> ReservarAsync(CorreoEnCola correo)
+    {
+        await _db.Entry(correo).ReloadAsync();
+
+        var ahora = _reloj.AhoraUtc;
+        if (_db.Entry(correo).State == EntityState.Detached || !correo.EstaDisponible(ahora))
+            return false;
+
+        correo.Reservar(ahora);
+        try
+        {
+            await _db.SaveChangesAsync();
+            return true;
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            _db.Entry(correo).State = EntityState.Detached;
+            return false;
+        }
     }
 
     private static string DescribirError(Exception ex)

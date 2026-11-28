@@ -3,6 +3,8 @@ using Despacho.Core.Datos;
 using Despacho.Core.Notificaciones;
 using Despacho.Core.Usuarios;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Despacho.Core.Permisos;
 
@@ -24,12 +26,14 @@ public sealed class ServicioPermisos : IServicioPermisos
     private readonly CoreDbContext _db;
     private readonly IReloj _reloj;
     private readonly IServicioNotificaciones _notificaciones;
+    private readonly ILogger _logger;
 
-    public ServicioPermisos(CoreDbContext db, IReloj reloj, IServicioNotificaciones notificaciones)
+    public ServicioPermisos(CoreDbContext db, IReloj reloj, IServicioNotificaciones notificaciones, ILogger<ServicioPermisos>? logger = null)
     {
         _db = db;
         _reloj = reloj;
         _notificaciones = notificaciones;
+        _logger = logger ?? NullLogger<ServicioPermisos>.Instance;
     }
 
     public async Task<Resultado<int>> CrearAsync(int solicitanteId, string? permiso)
@@ -60,9 +64,10 @@ public sealed class ServicioPermisos : IServicioPermisos
         _db.SolicitudesPermiso.Add(solicitud);
         await _db.SaveChangesAsync();
 
-        await _notificaciones.NotificarAdministradoresAsync(
-            TituloSolicitudCreada,
-            $"El usuario {usuario.Correo} pidió el permiso {permisoPedido}.");
+        await AvisoSeguro.EjecutarAsync(_logger, "SolicitudCreada", solicitanteId, () =>
+            _notificaciones.NotificarAdministradoresAsync(
+                TituloSolicitudCreada,
+                $"El usuario {usuario.Correo} pidió el permiso {permisoPedido}."));
 
         return Resultado<int>.Ok(solicitud.Id);
     }
@@ -106,10 +111,11 @@ public sealed class ServicioPermisos : IServicioPermisos
 
         await _db.SaveChangesAsync();
 
-        await _notificaciones.NotificarAsync(
-            solicitud.SolicitanteId,
-            TituloSolicitudAprobada,
-            $"Tu solicitud del permiso {solicitud.PermisoSolicitado} fue aprobada.");
+        await AvisoSeguro.EjecutarAsync(_logger, "SolicitudAprobada", solicitud.SolicitanteId, () =>
+            _notificaciones.NotificarAsync(
+                solicitud.SolicitanteId,
+                TituloSolicitudAprobada,
+                $"Tu solicitud del permiso {solicitud.PermisoSolicitado} fue aprobada."));
 
         return Resultado.Ok();
     }
@@ -134,10 +140,11 @@ public sealed class ServicioPermisos : IServicioPermisos
 
         await _db.SaveChangesAsync();
 
-        await _notificaciones.NotificarAsync(
-            solicitud.SolicitanteId,
-            TituloSolicitudRechazada,
-            $"Tu solicitud del permiso {solicitud.PermisoSolicitado} fue rechazada. Motivo: {solicitud.MotivoRechazo}");
+        await AvisoSeguro.EjecutarAsync(_logger, "SolicitudRechazada", solicitud.SolicitanteId, () =>
+            _notificaciones.NotificarAsync(
+                solicitud.SolicitanteId,
+                TituloSolicitudRechazada,
+                $"Tu solicitud del permiso {solicitud.PermisoSolicitado} fue rechazada. Motivo: {solicitud.MotivoRechazo}"));
 
         return Resultado.Ok();
     }

@@ -88,7 +88,7 @@ Dado el repositorio completo, cuando se busca la contraseña SMTP del `.env` en 
 Dado 5 solicitudes en el rango (2 Pendiente, 2 Aplicada, 1 Rechazada), cuando A1 consulta `GET /api/reportes/solicitudes` con ese rango, entonces recibe **3 filas** (una por estado, con su cantidad: 2, 2 y 1), no las 5 solicitudes. Los estados sin solicitudes no aparecen.
 
 **C-22 (RF-REP-02, RF-REP-03) Reporte del negocio: lo que hizo cada repartidor.**
-Pregunta que responde: *¿cuántos envíos entregó cada repartidor, cuántos kilómetros recorrió y cuánto generó?* Dado dos repartidores con 3 y 2 envíos entregados en el rango, cuando A1 consulta `GET /api/reportes/repartidores`, entonces recibe **2 filas**, una por repartidor, con la cantidad de envíos entregados, la suma de `DistanciaKm` y la suma de `Costo`, ordenadas de mayor a menor por lo generado. Solo cuenta envíos en estado `Entregado`.
+Pregunta que responde: *¿cuántos envíos entregó cada repartidor, cuántos kilómetros recorrió y cuánto generó?* Dado dos repartidores con 3 y 2 envíos entregados en el rango, cuando A1 consulta `GET /api/reportes/repartidores`, entonces recibe **2 filas**, una por repartidor, con la cantidad de envíos entregados, la suma de `DistanciaKm` y la suma de `Costo`, ordenadas de mayor a menor por lo generado. Solo cuenta envíos en estado `Entregado`. El rango se aplica a la fecha de entrega (`EntregadoEnUtc`), no a la fecha de creación (ver C-33).
 
 **C-23 (RF-REP-03) La agregación la hace la base de datos.**
 Dado el código de los dos reportes, cuando se revisa, entonces la agrupación y los totales se calculan en la consulta (`GroupBy` con `Count`/`Sum` traducidos a SQL), no trayendo todos los registros a memoria para sumarlos.
@@ -113,3 +113,14 @@ Dado un rango donde no hay registros, cuando se consulta cualquier reporte, ento
 **C-29** `dotnet test` pasa completo, incluidas las 64 pruebas que ya existían.
 **C-30** Los seis frentes de la revisión acumulada siguen funcionando con `docker compose up --build`.
 **C-31 (RD-03)** Nada en `src/Despacho.Core` usa `Despacho.Negocio`.
+
+## Criterios agregados después de la auditoría (Asignación 3)
+
+**C-32 (RF-NOT-12, Hallazgo 1) Dos procesadores al mismo tiempo no duplican.**
+Dado un correo `Pendiente` en la cola, cuando dos procesadores corren a la vez (por ejemplo, el servicio `enviador` y el comando manual del README), entonces el correo se envía una sola vez y queda `Enviado` con 1 intento.
+
+**C-33 (RF-REP-02, RF-REP-05, Hallazgo 2) El reporte de repartidores cuenta por la fecha de entrega.**
+Dado un envío creado el 1 de noviembre y entregado el 10, cuando A1 consulta `GET /api/reportes/repartidores?desde=2026-11-10&hasta=2026-11-10`, entonces el envío aparece contado para su repartidor; y con `desde=2026-11-01&hasta=2026-11-01` no aparece.
+
+**C-34 (RF-NOT-08, RD-07, Hallazgo 3) Si la notificación falla, la operación responde éxito.**
+Dado que guardar la notificación falla, cuando R acepta o entrega un envío, o A1 crea, aprueba o rechaza una solicitud, entonces la operación responde éxito, queda guardada y la falla aparece como advertencia en el registro de la Api, sin datos sensibles.
